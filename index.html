@@ -1,0 +1,3408 @@
+<!DOCTYPE html>
+<html lang="ta">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>தாஸ் டிரேட் டெர்மினல் | Dhass Trade Terminal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Tamil:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0A0D12;
+  --panel:#11161D;
+  --panel2:#161C25;
+  --border:#232B36;
+  --text:#E7ECF2;
+  --muted:#7C8A9A;
+  --amber:#F2A93B;
+  --amber-dim:#4A3A1C;
+  --buy:#12C48B;
+  --buy-dim:#0E3A2D;
+  --sell:#FF5D6C;
+  --sell-dim:#3A1A1F;
+  --info:#4FA3FF;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:'Noto Sans Tamil','Segoe UI',sans-serif;}
+.mono{font-family:'JetBrains Mono',monospace;}
+button{font-family:inherit;cursor:pointer;}
+input,select{font-family:inherit;}
+::-webkit-scrollbar{width:8px;height:8px;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+
+/* ---------- LOGIN ---------- */
+#loginScreen{
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(circle at 20% 20%, #14202B 0%, #0A0D12 60%);
+  padding:20px;
+}
+.loginCard{
+  width:100%;max-width:420px;background:var(--panel);border:1px solid var(--border);
+  border-radius:14px;padding:32px 28px;box-shadow:0 20px 60px rgba(0,0,0,.5);
+}
+.brandRow{display:flex;align-items:center;gap:12px;margin-bottom:6px;}
+.brandMark{width:38px;height:38px;border-radius:9px;background:linear-gradient(135deg,var(--amber),#C97A16);
+  display:flex;align-items:center;justify-content:center;font-weight:700;color:#1A1200;font-size:18px;flex-shrink:0;}
+.brandTitle{font-size:17px;font-weight:700;letter-spacing:.2px;}
+.brandSub{font-size:12px;color:var(--muted);margin-top:2px;}
+.loginDivider{height:1px;background:var(--border);margin:20px 0;}
+.field{margin-bottom:14px;}
+.field label{display:block;font-size:12.5px;color:var(--muted);margin-bottom:6px;}
+.field input,.field select{
+  width:100%;padding:11px 12px;background:var(--panel2);border:1px solid var(--border);
+  border-radius:8px;color:var(--text);font-size:14px;outline:none;transition:border-color .15s;
+}
+.field input:focus,.field select:focus{border-color:var(--amber);}
+.radioRow{display:flex;gap:8px;margin-bottom:14px;}
+.radioRow label{
+  flex:1;text-align:center;padding:8px;border:1px solid var(--border);border-radius:8px;
+  font-size:12.5px;color:var(--muted);cursor:pointer;background:var(--panel2);
+}
+.radioRow input{display:none;}
+.radioRow input:checked + span{color:var(--amber);}
+.radioRow label:has(input:checked){border-color:var(--amber);background:var(--amber-dim);}
+.btnPrimary{
+  width:100%;padding:12px;background:var(--amber);border:none;border-radius:8px;
+  color:#1A1200;font-weight:700;font-size:14.5px;margin-top:4px;
+}
+.btnPrimary:disabled{opacity:.5;cursor:not-allowed;}
+.btnGhost{
+  width:100%;padding:10px;background:transparent;border:1px solid var(--border);border-radius:8px;
+  color:var(--muted);font-size:13px;margin-top:8px;
+}
+.loginMsg{font-size:12.5px;padding:10px;border-radius:8px;margin-bottom:14px;display:none;}
+.loginMsg.error{background:var(--sell-dim);color:var(--sell);display:block;}
+.loginMsg.info{background:#132A3A;color:var(--info);display:block;}
+.modalOverlay{position:fixed;inset:0;background:rgba(0,0,0,.62);display:none;align-items:center;justify-content:center;z-index:900;padding:16px;}
+.modalOverlay.show{display:flex;}
+.modalBox{width:100%;max-width:380px;background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:20px;max-height:92vh;overflow:auto;}
+.modalBox h3{margin:0 0 4px;font-size:16px;}
+.modalCloseX{position:absolute;top:14px;right:16px;background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;}
+.ordMiniBtn{border:none;border-radius:4px;font-size:10px;font-weight:700;padding:2px 5px;margin-left:4px;cursor:pointer;}
+.ordMiniBtn.buy{background:var(--buy-dim);color:var(--buy);}
+.ordMiniBtn.sell{background:var(--sell-dim);color:var(--sell);}
+.orderQtyRow{display:flex;gap:8px;}
+.orderQtyRow .field{flex:1;}
+.recoClick{cursor:pointer;text-decoration:underline dotted;}
+.loginMsg.ok{background:var(--buy-dim);color:var(--buy);display:block;}
+.securityNote{font-size:11px;color:var(--muted);line-height:1.6;margin-top:16px;padding-top:14px;border-top:1px dashed var(--border);}
+
+/* ---------- APP SHELL ---------- */
+#appScreen{display:none;min-height:100vh;flex-direction:column;}
+.topBar{
+  display:flex;align-items:center;gap:14px;padding:10px 16px;background:var(--panel);
+  border-bottom:1px solid var(--border);flex-wrap:wrap;
+}
+.topBar .brandRow{margin:0;}
+.topBar .brandTitle{font-size:14.5px;}
+.modePill{
+  font-size:11.5px;font-weight:700;padding:5px 10px;border-radius:20px;letter-spacing:.3px;
+}
+.modePill.paper{background:#1A2E3D;color:var(--info);}
+.modePill.live{background:var(--sell-dim);color:var(--sell);}
+.spacer{flex:1;}
+.profileBits{font-size:12px;color:var(--muted);display:flex;gap:14px;align-items:center;}
+.logoutBtn{background:transparent;border:1px solid var(--border);color:var(--muted);padding:6px 12px;border-radius:7px;font-size:12px;}
+
+.tickerTape{
+  overflow:hidden;white-space:nowrap;background:#0D1319;border-bottom:1px solid var(--border);
+  padding:7px 0;font-size:12.5px;
+}
+.tickerTape .tickerInner{display:inline-block;padding-left:100%;animation:ticker 30s linear infinite;}
+@keyframes ticker{0%{transform:translateX(0);}100%{transform:translateX(-100%);}}
+.tickItem{display:inline-flex;gap:6px;margin-right:34px;font-family:'JetBrains Mono',monospace;}
+.watchlistScroll{max-height:62vh;overflow-y:auto;overflow-x:auto;}
+.niftyBarPanel{padding:10px 14px;}
+.niftyBar{display:flex;gap:22px;flex-wrap:wrap;align-items:center;}
+.niftyBar.worldBar{margin-top:8px;padding-top:8px;border-top:1px solid var(--border);opacity:0.92;}
+.niftyBar .niftyName{font-weight:700;font-size:14px;opacity:0.9;letter-spacing:0.3px;}
+.niftyBar .niftyStat{display:flex;flex-direction:column;gap:1px;}
+.niftyBar .niftyStat small{font-size:10px;opacity:0.6;}
+.niftyBar .niftyStat b{font-size:14px;font-family:monospace;}
+.w52Badge{display:inline-block;margin-left:6px;padding:1px 6px;border-radius:5px;font-size:10px;font-weight:700;vertical-align:middle;}
+.w52Badge.high{background:rgba(46,204,113,0.18);color:#2ecc71;}
+.w52Badge.low{background:rgba(231,76,60,0.18);color:#e74c3c;}
+.watchlistScroll table thead th{position:sticky;top:0;background:var(--panel2);z-index:3;box-shadow:0 1px 0 var(--border);}
+.vGreen{color:var(--buy);} .vRed{color:var(--sell);} .vOrange{color:var(--amber);} .vLightBlue{color:#7EC8FF;}
+.tickUp{color:var(--buy);}.tickDown{color:var(--sell);}
+
+.tabBar{display:flex;gap:4px;padding:8px 16px 0;background:var(--panel);overflow-x:auto;border-bottom:1px solid var(--border);}
+.tabBtn{
+  padding:9px 16px;background:transparent;border:none;color:var(--muted);font-size:13px;
+  border-bottom:2px solid transparent;white-space:nowrap;font-weight:500;
+}
+.tabBtn.active{color:var(--amber);border-bottom-color:var(--amber);}
+.subTabBtn{
+  padding:9px 16px;background:transparent;border:none;color:var(--muted);font-size:13px;
+  border-bottom:2px solid transparent;white-space:nowrap;font-weight:500;cursor:pointer;
+}
+.subTabBtn.active{color:var(--amber);border-bottom-color:var(--amber);}
+
+.tabContent{display:none;padding:16px;max-width:1400px;margin:0 auto;width:100%;}
+.tabContent.active{display:block;}
+
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px;}
+.panelHead{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.panelHead h3{margin:0;font-size:14px;font-weight:600;color:var(--text);}
+.panelHead .hint{font-size:11.5px;color:var(--muted);}
+
+.rowInput{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+.rowInput input,.rowInput select{
+  padding:9px 10px;background:var(--panel2);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:13px;
+}
+.rowInput input{flex:1;min-width:160px;}
+.btnSm{padding:9px 14px;background:var(--amber);border:none;border-radius:7px;color:#1A1200;font-weight:700;font-size:13px;}
+.btnSmGhost{padding:9px 14px;background:transparent;border:1px solid var(--border);border-radius:7px;color:var(--muted);font-size:13px;}
+
+.searchResults{position:relative;}
+.searchDropdown{
+  position:absolute;top:100%;left:0;right:0;background:var(--panel2);border:1px solid var(--border);
+  border-radius:8px;max-height:260px;overflow-y:auto;z-index:20;display:none;margin-top:4px;
+}
+.searchDropdown.show{display:block;}
+.searchRow{padding:9px 12px;border-bottom:1px solid var(--border);cursor:pointer;font-size:13px;display:flex;justify-content:space-between;}
+.searchRow:hover{background:var(--panel);}
+.searchRow small{color:var(--muted);}
+
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{text-align:right;color:var(--muted);font-weight:600;font-size:11.5px;padding:8px 10px;border-bottom:1px solid var(--border);}
+th:first-child,td:first-child{text-align:left;}
+td{padding:9px 10px;border-bottom:1px solid var(--border);text-align:right;font-family:'JetBrains Mono',monospace;}
+tr:last-child td{border-bottom:none;}
+.upv{color:var(--buy);}.downv{color:var(--sell);}
+.rowClick{cursor:pointer;}
+.rowClick:hover{background:var(--panel2);}
+.emptyState{text-align:center;padding:30px;color:var(--muted);font-size:13px;}
+
+.badge{font-size:10.5px;padding:2px 7px;border-radius:10px;font-weight:700;}
+.badge.buy{background:var(--buy-dim);color:var(--buy);}
+.badge.sell{background:var(--sell-dim);color:var(--sell);}
+.iconBtn{background:transparent;border:none;color:var(--muted);font-size:15px;padding:2px 6px;}
+.iconBtn:hover{color:var(--sell);}
+
+/* Chart tab */
+.chartGrid{display:grid;grid-template-columns:1fr 380px;gap:14px;}
+@media(max-width:900px){.chartGrid{grid-template-columns:1fr;}}
+.chartControls{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center;}
+.pillBtn{padding:6px 12px;border-radius:16px;border:1px solid var(--border);background:var(--panel2);color:var(--muted);font-size:12px;}
+.pillBtn.active{background:var(--amber-dim);color:var(--amber);border-color:var(--amber);}
+canvas{width:100%;display:block;background:#0D1319;border-radius:8px;}
+#priceCanvas{height:260px;}
+#indicatorCanvas{height:100px;}
+#priceCanvas, #indicatorCanvas{touch-action:none;}
+.chartCanvasWrap{overscroll-behavior:contain;}
+@media(max-width:900px){
+  #priceCanvas{height:min(280px,44vh)!important;}
+  #indicatorCanvas{height:min(110px,18vh)!important;}
+}
+.indicatorToggles{display:flex;flex-direction:column;gap:8px;}
+.indChip{display:flex;align-items:center;gap:8px;padding:9px 11px;background:var(--panel2);border:1px solid var(--border);border-radius:8px;font-size:12.5px;}
+.indChip input{accent-color:var(--amber);}
+.chartToolbar{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+.chartToolbar select{padding:6px 9px;background:var(--panel2);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:12px;}
+.wlTabsRow{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:12px;}
+.wlTab{
+  display:flex;align-items:center;gap:6px;background:var(--panel2);border:1px solid var(--border);
+  border-radius:8px;padding:5px 4px 5px 10px;font-size:12.5px;
+}
+.wlTab.active{border-color:var(--amber);background:var(--amber-dim);}
+.wlTab.active .wlTabName{color:var(--amber);font-weight:600;}
+.wlTabName{cursor:pointer;color:var(--text);}
+.wlTabName small{color:var(--muted);}
+.wlTabActions{display:flex;gap:1px;}
+.wlIconBtn{background:transparent;border:none;color:var(--muted);font-size:11px;padding:3px 4px;border-radius:5px;}
+.wlIconBtn:hover{background:var(--panel);}
+.wlIconBtn:disabled{opacity:.3;}
+.recoBadge{display:inline-block;padding:3px 9px;border-radius:6px;font-size:11.5px;font-weight:700;letter-spacing:.2px;}
+.recoBadge.strongbuy{background:rgba(18,196,139,0.22);color:#12C48B;}
+.recoBadge.buy{background:rgba(18,196,139,0.12);color:#4FE0AD;}
+.recoBadge.neu{background:var(--panel2);color:var(--muted);border:1px solid var(--border);}
+.recoBadge.sell{background:rgba(255,93,108,0.12);color:#FF8A96;}
+.recoBadge.strongsell{background:rgba(255,93,108,0.22);color:#FF5D6C;}
+.recoBox .val{font-size:13px;}
+.recoLevels{font-size:11px;color:var(--muted);margin-top:4px;font-family:'JetBrains Mono',monospace;}
+.recoLevels b{font-weight:600;}
+.recoLevels .tgt{color:#12C48B;} .recoLevels .sl{color:#FF5D6C;}
+.depthGrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.depthTable{width:100%;font-size:15px;border-collapse:collapse;}
+.depthTable th{color:var(--muted);font-weight:600;padding:6px 8px;text-align:left;border-bottom:1px solid var(--border);font-size:12px;}
+.depthTable td{padding:7px 8px;font-family:'JetBrains Mono',monospace;font-weight:600;}
+.depthStatsGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;}
+.depthStatItem{background:var(--panel2);border:1px solid var(--border);border-radius:7px;padding:6px 8px;}
+.depthStatItem .lbl{display:block;font-size:10px;color:var(--muted);margin-bottom:2px;}
+.depthStatItem b{font-size:13px;font-family:'JetBrains Mono',monospace;}
+#marketDepthPanel.depthFloating{position:fixed;z-index:400;width:300px;box-shadow:0 8px 28px rgba(0,0,0,.45);border-color:var(--amber);}
+#marketDepthPanel.depthFloating .depthStatsGrid{grid-template-columns:repeat(3,1fr);}
+.depthDragHandle{display:flex;align-items:center;justify-content:space-between;}
+.depthTable:first-child td:nth-child(2){color:var(--buy);text-align:right;}
+.depthTable:last-child td:nth-child(1){color:var(--sell);}
+.toolBtn{padding:6px 10px;border-radius:7px;border:1px solid var(--border);background:var(--panel2);color:var(--muted);font-size:13px;line-height:1;}
+.toolBtn.active{background:var(--amber-dim);color:var(--amber);border-color:var(--amber);}
+.chartCanvasWrap{position:relative;}
+#chartFullscreenBtn{margin-left:auto;}
+.crosshairBar{
+  display:none;gap:14px;flex-wrap:wrap;font-family:'JetBrains Mono',monospace;font-size:11.5px;
+  color:var(--muted);background:var(--panel2);border:1px solid var(--border);border-radius:8px;
+  padding:6px 10px;margin-bottom:6px;
+}
+.crosshairBar.show{display:flex;}
+.crosshairBar b{color:var(--text);font-weight:600;margin-left:3px;}
+.crosshairBar .cO b{color:var(--info);} .crosshairBar .cH b{color:var(--buy);} .crosshairBar .cL b{color:var(--sell);}
+.crosshairBar .cC b{color:var(--amber);}
+#chartPanelWrap.chartFullscreen{
+  position:fixed;inset:0;z-index:500;background:var(--bg);margin:0;border-radius:0;
+  overflow-y:auto;padding:12px;
+}
+#chartPanelWrap.chartFullscreen .chartGrid{grid-template-columns:1fr 380px;}
+#chartPanelWrap.chartFullscreen #priceCanvas{height:calc(100vh - 260px);}
+.fsExitHint{display:none;font-size:11px;color:var(--muted);margin-bottom:8px;}
+#chartPanelWrap.chartFullscreen .fsExitHint{display:block;}
+.statBox{background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:8px;}
+.statBox .lbl{font-size:11px;color:var(--muted);}
+.statBox .val{font-size:15px;font-weight:700;font-family:'JetBrains Mono',monospace;}
+.statChipRow{display:flex;flex-direction:column;gap:4px;margin-bottom:10px;}
+.statChip{display:flex;justify-content:space-between;align-items:center;background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:4px 9px;}
+.statChip .lbl{font-size:10.5px;color:var(--muted);}
+.statChip .val{font-size:12px;font-weight:700;font-family:'JetBrains Mono',monospace;}
+
+/* order form */
+.orderGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+@media(max-width:600px){.orderGrid{grid-template-columns:1fr;}}
+.segBtns{display:flex;border-radius:8px;overflow:hidden;border:1px solid var(--border);}
+.segBtns button{flex:1;padding:10px;background:var(--panel2);border:none;color:var(--muted);font-weight:700;font-size:13px;}
+.segBtns button.active.buy{background:var(--buy-dim);color:var(--buy);}
+.segBtns button.active.sell{background:var(--sell-dim);color:var(--sell);}
+
+.toast{
+  position:fixed;bottom:20px;right:20px;background:var(--panel2);border:1px solid var(--border);
+  border-left:3px solid var(--amber);padding:12px 16px;border-radius:8px;font-size:13px;max-width:320px;
+  box-shadow:0 10px 30px rgba(0,0,0,.4);z-index:100;animation:slideIn .25s ease;
+}
+.toast.ok{border-left-color:var(--buy);}
+.toast.err{border-left-color:var(--sell);}
+@keyframes slideIn{from{transform:translateX(30px);opacity:0;}to{transform:translateX(0);opacity:1;}}
+</style>
+</head>
+<body>
+
+<!-- =============== LOGIN SCREEN =============== -->
+<div id="loginScreen">
+  <div class="loginCard">
+    <div class="brandRow">
+      <div class="brandMark">த</div>
+      <div>
+        <div class="brandTitle">தாஸ் டிரேட் டெர்மினல்</div>
+        <div class="brandSub">Angel One SmartAPI · Live &amp; Paper Trading</div>
+      </div>
+    </div>
+    <div class="loginDivider"></div>
+    <div id="loginMsg" class="loginMsg"></div>
+
+    <div class="field">
+      <label>API Key</label>
+      <input type="text" id="inApiKey" placeholder="SmartAPI App API Key" autocomplete="off">
+    </div>
+    <div class="field">
+      <label>Client Code</label>
+      <input type="text" id="inClientCode" placeholder="எ.கா. A123456" autocomplete="off">
+    </div>
+    <div class="field">
+      <label>Password / MPIN</label>
+      <input type="password" id="inPassword" placeholder="Trading PIN" autocomplete="off">
+    </div>
+
+    <div class="radioRow">
+      <label><input type="radio" name="totpMode" value="secret" checked><span>TOTP Secret (Auto)</span></label>
+      <label><input type="radio" name="totpMode" value="manual"><span>TOTP Code (Manual)</span></label>
+    </div>
+
+    <div class="field" id="totpSecretField">
+      <label>TOTP Secret (Base32) — Authenticator app setup key</label>
+      <input type="text" id="inTotpSecret" placeholder="எ.கா. JBSWY3DPEHPK3PXP" autocomplete="off">
+    </div>
+    <div class="field" id="totpManualField" style="display:none;">
+      <label>Authenticator App-ல இருந்து தற்போதைய 6-டிஜிட் கோட்</label>
+      <input type="text" id="inTotpManual" placeholder="123456" maxlength="6">
+    </div>
+
+    <div class="field">
+      <label>Remember credentials இந்த device-ல</label>
+      <select id="inRemember">
+        <option value="yes">ஆமா, சேவ் பண்ணு (இந்த browser-ல மட்டும்)</option>
+        <option value="no">இல்ல, ஒவ்வொரு தடவையும் கேளு</option>
+      </select>
+    </div>
+
+    <button class="btnPrimary" id="btnLogin">லாகின் செய்</button>
+    <button class="btnGhost" id="btnPaperOnly">Credentials இல்லாம Paper Trading மட்டும் ஆரம்பி</button>
+
+    <div class="securityNote">
+      🔒 உங்கள் credentials இந்த browser-ன் localStorage-ல மட்டும் சேமிக்கப்படுகிறது — எந்த சர்வருக்கும் அனுப்பப்படாது. SmartAPI calls நேரடியா உங்கள் browser-ல் இருந்து Angel One-க்கு போகும். TOTP Secret சேமிக்கிறது வசதிக்காக, ஆனா அது உங்கள் 2FA-க்கு சமம் — பகிரப்பட்ட/பொது கணினியில் "Manual" ஆப்ஷனை பயன்படுத்துங்கள்.
+    </div>
+  </div>
+</div>
+
+<!-- =============== MAIN APP =============== -->
+<div id="appScreen">
+  <div class="topBar">
+    <div class="brandRow">
+      <div class="brandMark" style="width:30px;height:30px;font-size:14px;">த</div>
+      <div class="brandTitle">தாஸ் டிரேட் டெர்மினல்</div>
+    </div>
+    <span class="modePill" id="modePill">PAPER</span>
+    <div class="spacer"></div>
+    <div class="profileBits">
+      <span id="profileName"></span>
+      <span id="clockBit" class="mono"></span>
+    </div>
+    <button class="logoutBtn" id="btnSwitchMode">Mode Switch</button>
+    <span id="cloudSyncStatus" class="mono" style="font-size:11px;opacity:0.85;margin-right:6px;cursor:pointer;" title="Watchlist Cloud Sync நிலை — கிளிக் பண்ணி URL அமைக்கவும்">☁️ Sync Off</span>
+    <button class="logoutBtn" id="btnCloudSyncSettings" title="வாட்ச்லிஸ்ட் Cloud Sync அமை">☁️ Sync அமை</button>
+    <button class="logoutBtn" id="btnForcePush" title="இந்த கணினியில் உள்ளதை Cloud-க்கு கட்டாயமா அனுப்பு (மற்ற கணினியில் உள்ளதை மாற்றி எழுதும்)">⬆️ Force Upload</button>
+    <button class="logoutBtn" id="btnForcePull" title="Cloud-ல் உள்ளதை இந்த கணினிக்கு கட்டாயமா இழுத்து போடு (இந்த கணினியில் உள்ளதை மாற்றி எழுதும்)">⬇️ Force Download</button>
+    <button class="logoutBtn" id="btnScripProxySettings" title="ஸ்டாக் லிஸ்ட் Proxy அமை">⚙️ Proxy அமை</button>
+    <button class="logoutBtn" id="btnLogout">Logout</button>
+  </div>
+
+  <div class="tickerTape"><div class="tickerInner" id="tickerInner">வாட்ச்லிஸ்ட்-ல ஸ்டாக் சேருங்கள் — இங்க scroll ஆகும்...</div></div>
+
+  <div class="tabBar" id="tabBar">
+    <button class="tabBtn active" data-tab="watchlist">வாட்ச்லிஸ்ட்</button>
+    <button class="tabBtn" data-tab="chart">சார்ட் + இண்டிக்கேட்டர்ஸ்</button>
+    <button class="tabBtn" data-tab="portfolio">போர்ட்ஃபோலியோ</button>
+    <button class="tabBtn" data-tab="positions">பொசிஷன்ஸ்</button>
+    <button class="tabBtn" data-tab="orderbook">ஆர்டர் புக்</button>
+    <button class="tabBtn" data-tab="journal">📓 நாள் குறிப்பேடு</button>
+    <button class="tabBtn" data-tab="settings">அமைப்புகள்</button>
+  </div>
+
+  <!-- WATCHLIST -->
+  <div class="tabContent active" id="tab-watchlist">
+    <div class="panel niftyBarPanel">
+      <div class="niftyBar" id="niftyBar">
+        <span class="niftyName">NIFTY 50</span>
+        <span class="niftyStat"><small>LTP</small><b id="niftyLtp">—</b></span>
+        <span class="niftyStat"><small>Chg</small><b id="niftyChg">—</b></span>
+        <span class="niftyStat"><small>Chg%</small><b id="niftyChgp">—</b></span>
+        <span class="niftyStat"><small>Open</small><b id="niftyOpen">—</b></span>
+        <span class="niftyStat"><small>High</small><b id="niftyHigh">—</b></span>
+        <span class="niftyStat"><small>Low</small><b id="niftyLow">—</b></span>
+        <span class="niftyStat"><small>Prev Close</small><b id="niftyClose">—</b></span>
+      </div>
+      <div class="niftyBar worldBar" id="sgxBar" title="Singapore/GIFT City-ல் trade ஆகும் Nifty futures — NSE திறப்பதற்கு முன் direction சொல்லும் leading indicator">
+        <span class="niftyName">SGX / GIFT NIFTY</span>
+        <span class="niftyStat"><small>Last</small><b id="sgxLast">—</b></span>
+        <span class="niftyStat"><small>Chg</small><b id="sgxChg">—</b></span>
+        <span class="niftyStat"><small>Chg%</small><b id="sgxChgp">—</b></span>
+        <span class="niftyStat"><small>Open</small><b id="sgxOpen">—</b></span>
+        <span class="niftyStat"><small>High</small><b id="sgxHigh">—</b></span>
+        <span class="niftyStat"><small>Low</small><b id="sgxLow">—</b></span>
+      </div>
+      <div class="niftyBar worldBar" id="worldBar">
+        <span class="niftyName">உலக சந்தை</span>
+        <span class="niftyStat"><small>Dow Jones</small><b id="wmDow">—</b></span>
+        <span class="niftyStat"><small>Nasdaq</small><b id="wmNasdaq">—</b></span>
+        <span class="niftyStat"><small>Nikkei 225</small><b id="wmNikkei">—</b></span>
+        <span class="niftyStat"><small>Shanghai Comp</small><b id="wmShanghai">—</b></span>
+        <span class="niftyStat"><small>Crude Oil (WTI)</small><b id="wmCrude">—</b></span>
+        <span class="niftyStat"><small>Natural Gas</small><b id="wmNatGas">—</b></span>
+        <span class="niftyStat"><small>Gold</small><b id="wmGold">—</b></span>
+        <span class="niftyStat"><small>USD/INR</small><b id="wmUsdinr">—</b></span>
+      </div>
+    </div>
+
+    <div class="panel" id="allStocksPanel" style="margin-top:14px;">
+      <div class="wlTabsRow">
+        <button class="subTabBtn active" id="btnAllStocksSubtab">அனைத்து பங்குகளும்</button>
+        <button class="subTabBtn" id="btnPremarketSubtab">🌅 பிரி-மார்க்கெட் (High Volume)</button>
+      </div>
+
+      <div id="allStocksSub-all">
+        <div class="panelHead">
+          <h3>அனைத்து NSE பங்குகளும்</h3>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <input type="text" id="allStocksSearchInput" placeholder="🔍 சிம்பல் தேடு..." style="width:130px;background:var(--panel2);border:1px solid var(--border);border-radius:7px;color:inherit;padding:6px 9px;font-size:12px;">
+            <select class="toolBtn" id="allStocksSortMode">
+              <option value="volDesc">Volume — அதிகம் முதலில்</option>
+              <option value="chgpDesc">Chg% — அதிகம் முதலில் (Gainers)</option>
+              <option value="chgpAsc">Chg% — குறைவு முதலில் (Losers)</option>
+              <option value="nameAsc">பெயர் A→Z</option>
+            </select>
+            <button class="toolBtn" id="allStocksViewCompact">▤ Compact</button>
+            <button class="toolBtn active" id="allStocksViewExpanded">▥ Expanded</button>
+            <button class="btnSmGhost" id="btnLoadAllStocks">⬇️ Load All Stocks</button>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px;">
+          <span class="niftyStat"><small>விலை Filter</small><b>
+            <input type="number" id="allStocksPriceMin" placeholder="0" style="width:64px;background:transparent;border:1px solid var(--border);border-radius:4px;color:inherit;padding:2px 4px;font-family:monospace;"> -
+            <input type="number" id="allStocksPriceMax" placeholder="00" style="width:64px;background:transparent;border:1px solid var(--border);border-radius:4px;color:inherit;padding:2px 4px;font-family:monospace;">
+            <button class="btnSmGhost" id="btnAllStocksPriceApply" style="padding:2px 8px;">Apply</button>
+          </b></span>
+          <span class="niftyStat" id="allStocksClearStat" style="cursor:pointer;display:none;" title="Filter அழி"><small>&nbsp;</small><b>✕ Filter அழி</b></span>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:6px;" id="allStocksStatus">
+          "⬇️ Load All Stocks" அழுத்தி தொடங்குங்க — NSE-ல் ஆயிரக்கணக்கான stock இருப்பதால் load ஆக சில நிமிடம் ஆகலாம். (பரிந்துரை இந்த பட்டியலில் கணக்கிடப்படாது — API வரம்பு காரணமா, அது "பிரி-மார்க்கெட்" tab-ல மட்டும்.)
+        </div>
+        <div class="watchlistScroll">
+          <table id="allStocksTable">
+            <thead><tr><th>சிம்பல்</th><th>LTP</th><th>Chg</th><th>Chg%</th></tr></thead>
+            <tbody id="allStocksBody"><tr><td colspan="4" class="emptyState">Load பண்ணப்படல</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="allStocksSub-premarket" style="display:none;">
+        <div class="panelHead">
+          <h3>🌅 இன்று — High Volume Top Stocks</h3>
+          <button class="btnSmGhost" id="btnLoadPremarket">🔄 Load / Refresh</button>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:6px;" id="premarketStatus">
+          Volume அடிப்படையில் Top 100 stocks-க்கு பரிந்துரை கணக்கிட்டு, Buy/Sell/Neutral எண்ணிக்கையுடன் காட்டும்.
+        </div>
+        <div class="niftyBar" id="premarketSummary" style="margin-bottom:10px;">
+          <span class="niftyStat"><small>மொத்தம்</small><b id="pmTotal">—</b></span>
+          <span class="niftyStat" id="pmBuyStat" style="cursor:pointer;" title="கிளிக் பண்ணி Buy மட்டும் பாருங்க"><small>🟢 Buy சமிக்ஞை</small><b id="pmBuy">—</b></span>
+          <span class="niftyStat" id="pmSellStat" style="cursor:pointer;" title="கிளிக் பண்ணி Sell மட்டும் பாருங்க"><small>🔴 Sell சமிக்ஞை</small><b id="pmSell">—</b></span>
+          <span class="niftyStat"><small>⚪ Neutral</small><b id="pmNeutral">—</b></span>
+          <span class="niftyStat"><small>விலை Filter</small><b><input type="number" id="pmPriceMin" placeholder="0" style="width:64px;background:transparent;border:1px solid var(--border);border-radius:4px;color:inherit;padding:2px 4px;font-family:monospace;"> - <input type="number" id="pmPriceMax" placeholder="00" style="width:64px;background:transparent;border:1px solid var(--border);border-radius:4px;color:inherit;padding:2px 4px;font-family:monospace;"> <button class="btnSmGhost" id="btnPmPriceApply" style="padding:2px 8px;">Apply</button></b></span>
+          <span class="niftyStat" id="pmClearStat" style="cursor:pointer;display:none;" title="Filter அழி"><small>&nbsp;</small><b>✕ Filter அழி</b></span>
+        </div>
+        <div class="watchlistScroll">
+          <table id="premarketTable">
+            <thead><tr><th>சிம்பல்</th><th>பரிந்துரை</th></tr></thead>
+            <tbody id="premarketBody"><tr><td colspan="17" class="emptyState">Load பண்ணப்படல</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panelHead"><h3>ஸ்டாக் சேர்</h3><span class="hint">குறைந்தது 2 எழுத்துக்கள் டைப் பண்ணுங்க</span></div>
+      <div class="rowInput searchResults">
+        <input type="text" id="stockSearchInput" placeholder="எ.கா. RELIANCE, TCS, INFY...">
+        <div class="searchDropdown" id="searchDropdown"></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="wlTabsRow" id="wlTabsRow"></div>
+      <div class="panelHead">
+        <h3>என் வாட்ச்லிஸ்ட்</h3>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <input type="text" id="wlSearchInput" placeholder="🔍 சிம்பல் தேடு..." style="width:130px;background:var(--panel2);border:1px solid var(--border);border-radius:7px;color:inherit;padding:6px 9px;font-size:12px;">
+          <select class="toolBtn" id="wlSortMode" title="வரிசைப்படுத்து">
+            <option value="added">சேர்த்த வரிசை</option>
+            <option value="chgpDesc">Chg% — அதிகம் முதலில் (Gainers)</option>
+            <option value="chgpAsc">Chg% — குறைவு முதலில் (Losers)</option>
+            <option value="nameAsc">பெயர் A→Z</option>
+          </select>
+          <button class="toolBtn" id="wlViewCompact" title="Compact View">▤ Compact</button>
+          <button class="toolBtn" id="wlViewExpanded" title="Expanded View">▥ Expanded</button>
+          <button class="btnSmGhost" id="btnRefreshWatchlist">🔄 Refresh</button>
+        </div>
+      </div>
+      <div class="watchlistScroll">
+      <table id="watchlistTable">
+        <thead><tr><th>சிம்பல்</th><th>பரிந்துரை</th><th>LTP</th><th>Chg</th><th>Chg%</th><th></th></tr></thead>
+        <tbody id="watchlistBody"><tr><td colspan="6" class="emptyState">வாட்ச்லிஸ்ட் காலியாக இருக்கு</td></tr></tbody>
+      </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHART -->
+  <div class="tabContent" id="tab-chart">
+    <div class="panel" id="chartPanelWrap">
+      <div class="fsExitHint">ESC — Full Screen-ல் இருந்து வெளியேற</div>
+      <div class="panelHead">
+        <h3 id="chartTitle">சார்ட் — ஸ்டாக் தேர்ந்தெடு</h3>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <button class="btnSmGhost" id="btnChartBuy" style="display:none;color:var(--buy);border-color:var(--buy-dim);">🟢 BUY</button>
+          <button class="btnSmGhost" id="btnChartSell" style="display:none;color:var(--sell);border-color:var(--sell-dim);">🔴 SELL</button>
+          <div class="rowInput searchResults" style="margin:0;">
+            <input type="text" id="chartSearchInput" placeholder="ஸ்டாக் தேடு..." style="width:220px;">
+            <div class="searchDropdown" id="chartSearchDropdown"></div>
+          </div>
+        </div>
+      </div>
+      <div class="chartControls">
+        <button class="pillBtn" data-interval="ONE_MINUTE">1m</button>
+        <button class="pillBtn" data-interval="FIVE_MINUTE">5m</button>
+        <button class="pillBtn active" data-interval="FIFTEEN_MINUTE">15m</button>
+        <button class="pillBtn" data-interval="ONE_HOUR">1H</button>
+        <button class="pillBtn" data-interval="ONE_DAY">1D</button>
+        <span style="flex:1;"></span>
+        <button class="btnSmGhost" id="btnLoadChart">📈 Load</button>
+      </div>
+      <div class="chartControls chartToolbar" style="margin-top:-4px;">
+        <select id="chartCandleType">
+          <option value="candlestick">🕯 Candlestick</option>
+          <option value="hollow">▢ Hollow Candle</option>
+          <option value="line">〰 Line</option>
+          <option value="area">▲ Area</option>
+          <option value="heikinashi">🀄 Heikin Ashi</option>
+          <option value="ohlc">┼ OHLC</option>
+        </select>
+        <button class="toolBtn" id="toolCrosshair" title="Crosshair (Space)">✛ Crosshair</button>
+        <button class="toolBtn" id="toolHLine" title="Horizontal Line">— H-Line</button>
+        <button class="toolBtn" id="toolTrend" title="Trend Line">╱ Trend</button>
+        <button class="toolBtn" id="toolFib" title="Fibonacci Retracement">Fib</button>
+        <button class="toolBtn" id="btnClearDrawings" title="இந்த ஸ்டாக்கின் drawing-களை அழி">🗑 Clear</button>
+        <button class="toolBtn" id="btnZoomIn" title="Zoom In">➕ Zoom</button>
+        <button class="toolBtn" id="btnZoomOut" title="Zoom Out">➖ Zoom</button>
+        <button class="toolBtn" id="btnZoomReset" title="Double-click / Zoom Reset">⤢ Reset</button>
+        <button class="toolBtn" id="chartFullscreenBtn" title="Full Screen (F)">⛶ Full Screen</button>
+      </div>
+      <div class="crosshairBar" id="crosshairBar">
+        <span class="cO">O<b id="chO">—</b></span>
+        <span class="cH">H<b id="chH">—</b></span>
+        <span class="cL">L<b id="chL">—</b></span>
+        <span class="cC">C<b id="chC">—</b></span>
+        <span>Vol<b id="chV">—</b></span>
+        <span>Time<b id="chT">—</b></span>
+      </div>
+      <div class="chartGrid">
+        <div class="chartCanvasWrap">
+          <canvas id="priceCanvas" height="260"></canvas>
+          <canvas id="indicatorCanvas" height="100" style="margin-top:8px;"></canvas>
+          <div class="panel" id="chartOrdersPanel" style="margin-top:10px;padding:10px 14px;">
+            <div style="font-size:12px;color:var(--muted);margin-bottom:6px;">இந்த ஸ்டாக்கிற்கான என் ஆர்டர்கள் / Position</div>
+            <div id="chartOrdersList" style="font-size:12.5px;"></div>
+          </div>
+        </div>
+        <div>
+          <div class="statChipRow">
+            <div class="statChip"><span class="lbl">LTP</span><span class="val" id="chartLTP">—</span></div>
+            <div class="statChip"><span class="lbl">RSI (14)</span><span class="val" id="chartRSI">—</span></div>
+            <div class="statChip"><span class="lbl">MACD</span><span class="val" id="chartMACD">—</span></div>
+            <div class="statChip"><span class="lbl">VWAP</span><span class="val" id="chartVWAP">—</span></div>
+          </div>
+          <div class="statBox recoBox">
+            <div class="lbl">பரிந்துரை (Technical Signal)</div>
+            <div class="val" id="chartReco"><span class="recoBadge neu">—</span></div>
+            <div class="recoLevels" id="chartRecoLevels"></div>
+          </div>
+
+          <button class="toolBtn" id="btnToggleIndicators" style="width:100%;margin-bottom:10px;">⚙ இண்டிகேட்டர் ஓவர்லேஸ் காட்டு/மறை</button>
+          <div class="indicatorToggles" id="indicatorTogglesBox" style="display:none;margin-bottom:10px;">
+            <label class="indChip"><input type="checkbox" id="indSMA" checked> SMA 20 (அம்பர்)</label>
+            <label class="indChip"><input type="checkbox" id="indEMA" checked> EMA 50 (நீலம்)</label>
+            <label class="indChip"><input type="checkbox" id="indVWAP"> VWAP (ஊதா)</label>
+            <label class="indChip"><input type="checkbox" id="indBB"> Bollinger Band</label>
+            <label class="indChip"><input type="checkbox" id="indST"> SuperTrend</label>
+            <label class="indChip"><input type="checkbox" id="indRSI" checked> RSI பேனல்</label>
+            <label class="indChip"><input type="checkbox" id="indMACD"> MACD பேனல்</label>
+            <label class="indChip"><input type="checkbox" id="indATR"> ATR பேனல்</label>
+          </div>
+
+          <div class="panel" id="marketDepthPanel" style="margin-top:0;padding:14px 16px;">
+            <div class="panelHead depthDragHandle" id="depthDragHandle" style="margin-bottom:10px;cursor:move;user-select:none;">
+              <h3 style="font-size:16px;">⠿ 📊 Market Depth</h3>
+              <button class="btnSmGhost" id="btnDepthDock" style="display:none;padding:2px 8px;font-size:11px;">📌 நிலைநிறுத்து</button>
+            </div>
+            <div class="depthStatsGrid" id="depthStatsGrid">
+              <div class="depthStatItem"><span class="lbl">LTP</span><b id="depthLTP">—</b></div>
+              <div class="depthStatItem"><span class="lbl">CHG</span><b id="depthChg">—</b></div>
+              <div class="depthStatItem"><span class="lbl">%</span><b id="depthChgp">—</b></div>
+              <div class="depthStatItem"><span class="lbl">Upper</span><b id="depthUpper">—</b></div>
+              <div class="depthStatItem"><span class="lbl">Lower</span><b id="depthLower">—</b></div>
+              <div class="depthStatItem"><span class="lbl">52H</span><b id="depth52H">—</b></div>
+              <div class="depthStatItem"><span class="lbl">52L</span><b id="depth52L">—</b></div>
+            </div>
+            <div class="depthGrid">
+              <table class="depthTable">
+                <thead><tr><th>Qty</th><th>Bid</th></tr></thead>
+                <tbody id="depthBidBody"><tr><td colspan="2" class="emptyState">சார்ட் load பண்ணுங்க</td></tr></tbody>
+              </table>
+              <table class="depthTable">
+                <thead><tr><th>Ask</th><th>Qty</th></tr></thead>
+                <tbody id="depthAskBody"><tr><td colspan="2" class="emptyState">—</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div style="font-size:10.5px;color:var(--muted);margin-top:8px;line-height:1.5;">
+            ⚠️ இது SMA/EMA/RSI/MACD/Bollinger/SuperTrend/VWAP — 7 இண்டிகேட்டர்களை ஒப்பிட்டு கணக்கிடும் தொழில்நுட்ப சமிக்ஞை மட்டும் (Target/SL-உம் ATR அடிப்படையில் கணக்கிடப்பட்டது).
+            நிதி ஆலோசனை (financial advice) இல்ல, துல்லியம் உறுதி இல்ல — முதலீட்டு முடிவை நீங்களே ஆராய்ந்து எடுங்க.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PORTFOLIO -->
+  <div class="tabContent" id="tab-portfolio">
+    <div class="panel">
+      <div class="panelHead"><h3>Holdings</h3><button class="btnSmGhost" id="btnRefreshPortfolio">🔄 Refresh</button></div>
+      <div style="overflow-x:auto;">
+      <table>
+        <thead><tr><th>சிம்பல்</th><th>Qty</th><th>Avg</th><th>LTP</th><th>P&amp;L</th><th>P&amp;L %</th></tr></thead>
+        <tbody id="holdingsBody"><tr><td colspan="6" class="emptyState">தரவு இல்லை</td></tr></tbody>
+      </table>
+      </div>
+    </div>
+    <div class="panel" id="paperCashPanel" style="display:none;">
+      <div class="panelHead"><h3>Paper Trading Cash</h3></div>
+      <div class="statBox"><div class="lbl">கையிருப்பு பணம் (Available Cash)</div><div class="val" id="paperCashVal">₹0</div></div>
+      <div class="rowInput" style="margin-top:10px;">
+        <input type="number" id="fundsAmountInput" placeholder="தொகை (எ.கா. 10000)">
+        <button class="btnSm" id="btnAddFunds" style="background:var(--buy);color:#04231A;">➕ பணம் சேர்</button>
+        <button class="btnSm" id="btnWithdrawFunds" style="background:var(--sell);color:#2A0508;">➖ பணம் எடு</button>
+      </div>
+      <div class="rowInput" style="margin-top:10px;">
+        <input type="number" id="resetCashInput" placeholder="புதிய தொகை (எ.கா. 100000)">
+        <button class="btnSm" id="btnResetCash">Reset Paper Cash</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- POSITIONS -->
+  <div class="tabContent" id="tab-positions">
+    <div class="panel">
+      <div class="panelHead"><h3>Positions (Intraday)</h3><button class="btnSmGhost" id="btnRefreshPositions">🔄 Refresh</button></div>
+      <div style="overflow-x:auto;">
+      <table>
+        <thead><tr><th>சிம்பல்</th><th>Status</th><th>Qty</th><th>ATP (B/S)</th><th>LTP (%)</th><th>Gain &amp; Loss</th><th></th></tr></thead>
+        <tbody id="positionsBody"><tr><td colspan="7" class="emptyState">தரவு இல்லை</td></tr></tbody>
+      </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ORDER BOOK -->
+  <div class="tabContent" id="tab-orderbook">
+    <div class="panel">
+      <div class="panelHead"><h3>ஆர்டர் புக்</h3><button class="btnSmGhost" id="btnRefreshOrderbook">🔄 Refresh</button></div>
+      <div style="overflow-x:auto;">
+      <table>
+        <thead><tr><th>நேரம்</th><th>சிம்பல்</th><th>Side</th><th>Type</th><th>Qty</th><th>விலை</th><th>Status</th><th></th></tr></thead>
+        <tbody id="orderbookBody"><tr><td colspan="8" class="emptyState">ஆர்டர்கள் இல்லை</td></tr></tbody>
+      </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- JOURNAL -->
+  <div class="tabContent" id="tab-journal">
+    <div class="panel">
+      <div class="panelHead"><h3>📓 தினசரி வர்த்தக குறிப்பேடு</h3><button class="btnSmGhost" id="btnSyncTrades">🔄 இன்றைய டிரேடுகள் Sync</button></div>
+      <div style="display:flex;gap:10px;margin-bottom:14px;">
+        <input type="text" id="journalNoteInput" placeholder="இன்றைய குறிப்பு எழுதுங்க... (எ.கா: இன்று சந்தை ஏன் இப்படி நகர்ந்தது)" style="flex:1;">
+        <button class="btnPrimary" id="btnAddJournalNote">➕ சேர்</button>
+      </div>
+      <div id="journalList"></div>
+    </div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="tabContent" id="tab-settings">
+    <div class="panel" style="max-width:520px;">
+      <div class="panelHead"><h3>Data Export / Import</h3></div>
+      <p style="font-size:12.5px;color:var(--muted);">வாட்ச்லிஸ்ட், பேப்பர் போர்ட்ஃபோலியோ, ஆர்டர் ஹிஸ்டரி — எல்லாத்தையும் JSON ஆக export/import பண்ணலாம்.</p>
+      <button class="btnSm" id="btnExportData" style="margin-right:8px;">⬇️ Export JSON</button>
+      <label class="btnSmGhost" style="display:inline-block;">⬆️ Import JSON<input type="file" id="importFileInput" accept=".json" style="display:none;"></label>
+    </div>
+    <div class="panel" style="max-width:520px;">
+      <div class="panelHead"><h3>💹 இலாப நஷ்ட கணக்கு (Realized P&amp;L)</h3></div>
+      <div id="fyRadioRow" style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:12px;"></div>
+      <div id="fyPnlResult" class="statBox"></div>
+      <p style="font-size:11px;color:var(--muted);margin-top:8px;">📌 இது "இன்றைய டிரேடுகள் Sync" மூலம் குறிப்பேட்டில் சேர்க்கப்பட்ட real trades-ஐ FIFO முறையில் பொருத்தி கணக்கிடப்படுது. Sync ஆரம்பிக்கிற தேதிக்கு முன்பான ஆண்டுகளுக்கு தரவு இருக்காது.</p>
+    </div>
+    <div class="panel" style="max-width:520px;">
+      <div class="panelHead"><h3>Credentials</h3></div>
+      <button class="btnSmGhost" id="btnClearCreds">🗑️ Saved Credentials அழி</button>
+    </div>
+    <div class="panel" style="max-width:520px;">
+      <div class="panelHead"><h3>🌐 என் Public IP (Internet IP)</h3></div>
+      <p style="font-size:12.5px;color:var(--muted);margin-bottom:10px;">
+        "not a registered IP" error வந்தா, இதுதான் Angel One-க்கு அனுப்பப்படுற உங்க உண்மையான internet IP —
+        (192.168.x.x மாதிரி எண் உங்க router கொடுக்குற local network IP, அது இதுவல்ல, அதை Angel One-டா தொடர்பே இல்ல).
+      </p>
+      <div class="statBox"><div class="lbl">தற்போதைய Public IP</div><div class="val" id="myPublicIpVal">—</div></div>
+      <button class="btnSm" id="btnRefreshPublicIp" style="margin-top:8px;margin-right:8px;">🔄 மறுபடி பார்</button>
+      <button class="btnSmGhost" id="btnCopyPublicIp">📋 Copy</button>
+    </div>
+  </div>
+</div>
+
+<!-- =============== ORDER MODAL (Buy/Sell — Paper & Live) =============== -->
+<div class="modalOverlay" id="orderModalOverlay">
+  <div class="modalBox" style="position:relative;">
+    <button class="modalCloseX" id="btnOrderModalClose">✕</button>
+    <h3 id="orderModalTitle">ஆர்டர்</h3>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:14px;" id="orderModalLtpLine">LTP: —</div>
+
+    <div class="radioRow" id="orderSideRow">
+      <label><input type="radio" name="orderSide" value="BUY" checked><span>🟢 BUY</span></label>
+      <label><input type="radio" name="orderSide" value="SELL"><span>🔴 SELL</span></label>
+    </div>
+
+    <div class="radioRow" id="orderModeRow">
+      <label><input type="radio" name="orderMode" value="paper" checked><span>🧪 பேப்பர் ஆர்டர்</span></label>
+      <label><input type="radio" name="orderMode" value="live"><span>🔴 லைவ் ஆர்டர்</span></label>
+    </div>
+
+    <div class="orderQtyRow">
+      <div class="field">
+        <label>Qty</label>
+        <input type="number" id="orderQty" value="1" min="1" step="1">
+      </div>
+      <div class="field">
+        <label>Order Type</label>
+        <select id="orderType">
+          <option value="MARKET">Market</option>
+          <option value="LIMIT">Limit</option>
+        </select>
+      </div>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin:-8px 0 12px;" id="orderAffordHint"></div>
+    <div class="field">
+      <label>விலை (Price) <span id="orderPriceHint" style="color:var(--muted);"></span></label>
+      <input type="number" id="orderPrice" step="0.05">
+    </div>
+    <div class="field" id="orderProductField">
+      <label>Product Type (Live)</label>
+      <select id="orderProductType">
+        <option value="INTRADAY">INTRADAY</option>
+        <option value="DELIVERY">DELIVERY</option>
+      </select>
+    </div>
+    <label class="indChip" style="display:flex;align-items:center;gap:6px;margin-bottom:10px;">
+      <input type="checkbox" id="orderUseSlTgt"> டார்கெட் / ஸ்டாப்-லாஸ் வை
+    </label>
+    <div class="orderQtyRow" id="orderSlTgtRow" style="display:none;">
+      <div class="field">
+        <label>🎯 டார்கெட்</label>
+        <input type="number" id="orderTarget" step="0.05">
+      </div>
+      <div class="field">
+        <label>🛑 ஸ்டாப்-லாஸ்</label>
+        <input type="number" id="orderSl" step="0.05">
+      </div>
+    </div>
+    <div id="orderModalMsg" class="loginMsg"></div>
+    <button class="btnPrimary" id="btnOrderSubmit">ஆர்டர் சமர்ப்பி</button>
+    <button class="btnGhost" id="btnOrderCancel">ரத்து</button>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   தாஸ் டிரேட் டெர்மினல் — Angel One SmartAPI Trading Platform
+   Single-file, localStorage-based, no server dependency.
+   ========================================================= */
+
+const BASE = "https://apiconnect.angelone.in";
+const LS_KEY = "dhassTrade_";
+
+/* ---------------- Utility: storage ---------------- */
+function lsGet(key, fallback){
+  try{ const v = localStorage.getItem(LS_KEY+key); return v ? JSON.parse(v) : fallback; }catch(e){ return fallback; }
+}
+function lsSet(key, val){ localStorage.setItem(LS_KEY+key, JSON.stringify(val)); }
+function lsDel(key){ localStorage.removeItem(LS_KEY+key); }
+
+/* ---------------- Toast ---------------- */
+function toast(msg, type){
+  const el = document.createElement('div');
+  el.className = 'toast' + (type ? ' '+type : '');
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(()=>{ el.remove(); }, 3800);
+}
+function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+/* ---------------- TOTP (RFC 6238) ---------------- */
+function base32Decode(base32){
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+  base32 = (base32||'').replace(/=+$/,'').toUpperCase().replace(/\s+/g,'');
+  let bits = '';
+  for(const c of base32){
+    const val = alphabet.indexOf(c);
+    if(val === -1) continue;
+    bits += val.toString(2).padStart(5,'0');
+  }
+  const bytes = [];
+  for(let i=0;i+8<=bits.length;i+=8) bytes.push(parseInt(bits.substr(i,8),2));
+  return new Uint8Array(bytes);
+}
+async function generateTOTP(secret){
+  const key = base32Decode(secret);
+  if(key.length === 0) throw new Error("TOTP secret தவறாக இருக்கு");
+  const epoch = Math.floor(Date.now()/1000);
+  const counter = Math.floor(epoch/30);
+  const buf = new ArrayBuffer(8);
+  const view = new DataView(buf);
+  view.setUint32(0,0); view.setUint32(4, counter);
+  const cryptoKey = await crypto.subtle.importKey('raw', key, {name:'HMAC', hash:'SHA-1'}, false, ['sign']);
+  const sig = await crypto.subtle.sign('HMAC', cryptoKey, buf);
+  const bytes = new Uint8Array(sig);
+  const offset = bytes[bytes.length-1] & 0xf;
+  const code = ((bytes[offset]&0x7f)<<24) | ((bytes[offset+1]&0xff)<<16) | ((bytes[offset+2]&0xff)<<8) | (bytes[offset+3]&0xff);
+  return (code % 1000000).toString().padStart(6,'0');
+}
+
+/* ---------------- App State ---------------- */
+const App = {
+  mode: lsGet('mode', 'paper'), // 'paper' | 'live'
+  creds: lsGet('creds', null),  // {apiKey, clientCode, password, totpSecret}
+  session: lsGet('session', null), // {jwtToken, refreshToken, feedToken, expiryTs}
+  watchlists: lsGet('watchlists', null), // [{id,name,stocks:[{symbol,token,exch,name}],pinned,favourite}]
+  activeWatchlistId: lsGet('activeWatchlistId', null),
+  watchlistView: lsGet('watchlistView', 'compact'), // 'compact' | 'expanded'
+  paperCash: lsGet('paperCash', 100000),
+  paperHoldings: lsGet('paperHoldings', []), // {symbol,token,exch,qty,avg}
+  paperOrders: lsGet('paperOrders', []),
+  journal: lsGet('journal', []),
+  liveIP: null,
+  scripMaster: null, // loaded lazily
+  quoteCache: {}, // token -> last known quote fields (in-memory only, for instant re-render on sort/tab switch)
+  recoCache: {}, // token -> last known recommendation badge HTML (in-memory only, survives table re-renders)
+  allStocksList: [], allStocksLoaded: false, allStocksView: 'expanded', allStocksSortMode: 'volDesc',
+  wlSearchQuery: '', allStocksSearchQuery: '', allStocksPriceMin: null, allStocksPriceMax: null,
+  premarketList: [], premarketReco: {}, premarketLoaded: false, premarketFilter: 'all',
+  premarketPriceMin: null, premarketPriceMax: null,
+  chart: { token:null, exch:null, symbol:null, interval:'FIFTEEN_MINUTE', candles:[], livePos:null,
+    candleType: lsGet('chartCandleType','candlestick'), view:{start:0,count:null}, priceShift:0,
+    drawTool:null, drawings: lsGet('chartDrawings',{}), crosshairOn:false, pendingDraw:null },
+};
+
+function migrateWatchlists(){
+  if(!App.watchlists || !Array.isArray(App.watchlists) || App.watchlists.length===0){
+    const legacyStocks = lsGet('watchlist', []); // pre-upgrade flat structure, kept for one-time migration
+    const id = 'wl_'+Date.now();
+    App.watchlists = [{ id, name:'Watchlist 1', stocks: legacyStocks, pinned:false, favourite:false }];
+    App.activeWatchlistId = id;
+  }
+  if(!App.activeWatchlistId || !App.watchlists.find(w=>w.id===App.activeWatchlistId)){
+    App.activeWatchlistId = App.watchlists[0].id;
+  }
+  lsSet('watchlists', App.watchlists); lsSet('activeWatchlistId', App.activeWatchlistId);
+}
+migrateWatchlists();
+function activeList(){ return App.watchlists.find(w=>w.id===App.activeWatchlistId) || App.watchlists[0]; }
+
+function persist(){
+  lsSet('mode', App.mode);
+  lsSet('creds', App.creds);
+  lsSet('session', App.session);
+  lsSet('watchlists', App.watchlists);
+  lsSet('activeWatchlistId', App.activeWatchlistId);
+  lsSet('watchlistView', App.watchlistView);
+  lsSet('paperCash', App.paperCash);
+  lsSet('paperHoldings', App.paperHoldings);
+  lsSet('paperOrders', App.paperOrders);
+  lsSet('journal', App.journal);
+}
+
+function addJournalEntry(text){
+  const now = new Date();
+  const dateKey = now.toISOString().slice(0,10);
+  App.journal.unshift({ date: dateKey, time: now.toTimeString().slice(0,5), text });
+  lsSet('journal', App.journal);
+  if(document.getElementById('journalList')) renderJournal();
+}
+
+/* ---------------- SmartAPI headers ---------------- */
+async function safeJson(res){
+  const text = await res.text();
+  try{
+    return JSON.parse(text);
+  }catch(parseErr){
+    console.error('Dhass Trade Terminal - non-JSON response (HTTP ' + res.status + '):', text.slice(0,500));
+    throw new Error('சர்வர் பதில் சரியில்ல (HTTP ' + res.status + '): ' + text.slice(0,150));
+  }
+}
+function commonHeaders(){
+  const h = {
+    'Content-Type':'application/json',
+    'Accept':'application/json',
+    'X-UserType':'USER',
+    'X-SourceID':'WEB',
+    'X-ClientLocalIP': '127.0.0.1',
+    'X-ClientPublicIP': App.liveIP || '106.51.1.1',
+    'X-MACAddress': '00:00:00:00:00:00',
+    'X-PrivateKey': App.creds ? App.creds.apiKey : ''
+  };
+  if(App.session && App.session.jwtToken) h['Authorization'] = 'Bearer ' + App.session.jwtToken;
+  return h;
+}
+async function fetchPublicIP(){
+  try{
+    const r = await fetch('https://api.ipify.org?format=json');
+    const j = await r.json();
+    App.liveIP = j.ip;
+  }catch(e){ /* fallback silently */ }
+}
+
+/* ---------------- Auth flow ---------------- */
+async function doLogin(){
+  const apiKey = document.getElementById('inApiKey').value.trim();
+  const clientCode = document.getElementById('inClientCode').value.trim();
+  const password = document.getElementById('inPassword').value.trim();
+  const totpMode = document.querySelector('input[name="totpMode"]:checked').value;
+  const remember = document.getElementById('inRemember').value === 'yes';
+  const msgEl = document.getElementById('loginMsg');
+
+  if(!apiKey || !clientCode || !password){
+    showLoginMsg('API Key, Client Code, Password எல்லாத்தையும் நிரப்புங்க', 'error'); return;
+  }
+  let totp;
+  try{
+    if(totpMode === 'secret'){
+      const secret = document.getElementById('inTotpSecret').value.trim();
+      if(!secret){ showLoginMsg('TOTP Secret கொடுங்க அல்லது Manual மோட் தேர்வு செய்யுங்க', 'error'); return; }
+      totp = await generateTOTP(secret);
+      App._pendingSecret = secret;
+    } else {
+      totp = document.getElementById('inTotpManual').value.trim();
+      if(!/^\d{6}$/.test(totp)){ showLoginMsg('6-டிஜிட் TOTP கோட் சரியா கொடுங்க', 'error'); return; }
+    }
+  }catch(e){ showLoginMsg('TOTP generate பண்ண முடியல: '+e.message, 'error'); return; }
+
+  showLoginMsg('லாகின் ஆகிறது...', 'info');
+  App.creds = { apiKey, clientCode, password, totpSecret: totpMode==='secret' ? document.getElementById('inTotpSecret').value.trim() : '' };
+  await fetchPublicIP();
+
+  try{
+    const res = await fetch(BASE + '/rest/auth/angelbroking/user/v1/loginByPassword', {
+      method:'POST', headers: commonHeaders(),
+      body: JSON.stringify({ clientcode: clientCode, password: password, totp: totp })
+    });
+    const data = await safeJson(res);
+    if(data.status && data.data){
+      App.session = { jwtToken: data.data.jwtToken, refreshToken: data.data.refreshToken, feedToken: data.data.feedToken, ts: Date.now() };
+      App.mode = 'live';
+      if(remember) persist(); else { lsDel('creds'); lsSet('mode', App.mode); lsSet('session', App.session); }
+      showLoginMsg('லாகின் வெற்றி!', 'ok');
+      setTimeout(()=>{ enterApp(); }, 400);
+    } else {
+      showLoginMsg('லாகின் தோல்வி: ' + (data.message || 'தெரியாத பிழை') + (data.errorcode ? ' ('+data.errorcode+')' : ''), 'error');
+    }
+  }catch(e){
+    showLoginMsg('நெட்வொர்க் பிழை: ' + e.message, 'error');
+  }
+}
+function showLoginMsg(msg, type){
+  const el = document.getElementById('loginMsg');
+  el.textContent = msg; el.className = 'loginMsg ' + type;
+}
+
+async function refreshSessionIfNeeded(){
+  if(App.mode !== 'live' || !App.session) return true;
+  const age = Date.now() - (App.session.ts||0);
+  if(age < 6*60*60*1000) return true; // fresh enough
+  try{
+    const res = await fetch(BASE + '/rest/auth/angelbroking/jwt/v1/generateTokens', {
+      method:'POST', headers: commonHeaders(),
+      body: JSON.stringify({ refreshToken: App.session.refreshToken })
+    });
+    const data = await safeJson(res);
+    if(data.status && data.data){
+      App.session.jwtToken = data.data.jwtToken;
+      App.session.refreshToken = data.data.refreshToken || App.session.refreshToken;
+      App.session.ts = Date.now();
+      persist();
+      return true;
+    }
+  }catch(e){}
+  return false;
+}
+
+function startPaperOnly(){
+  App.mode = 'paper';
+  App.creds = null; App.session = null;
+  persist();
+  enterApp();
+}
+
+function logout(){
+  lsDel('session');
+  App.session = null;
+  document.getElementById('appScreen').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+}
+
+/* ---------------- Cloud Sync (Watchlist) ---------------- */
+const CLOUD_SYNC_KEY = LS_KEY + 'cloudSyncUrl';
+const CLOUD_SYNC_UPDATED_KEY = LS_KEY + 'cloudSyncLastAppliedTs';
+let cloudSyncTimer = null;
+let cloudSyncInFlight = false;
+
+function getCloudSyncUrl(){ return localStorage.getItem(CLOUD_SYNC_KEY) || ''; }
+
+function promptCloudSyncUrl(){
+  const current = getCloudSyncUrl();
+  const val = prompt('Dhass Trade Terminal Backend (Apps Script) Web App URL-ஐ ஒட்டவும்:\n(Dhass-Trade-Terminal-Unified-Backend-Code.gs-ஐ Deploy செய்த பிறகு கிடைக்கும் URL — இதே URL ஸ்டாக் லிஸ்ட் Proxy-க்கும், Watchlist Cloud Sync-க்கும் பயன்படும் — வீடு மற்றும் கடை இரண்டு கணினியிலும் இதே URL-ஐ அமைக்கவும்)', current);
+  if(val === null) return;
+  const url = val.trim();
+  localStorage.setItem(CLOUD_SYNC_KEY, url);
+  App.scripMaster = null; // same backend link now also serves the scrip proxy
+  setCloudSyncStatus(url ? 'checking' : 'off');
+  if(url){
+    toast('✅ Cloud Sync URL சேமிக்கப்பட்டது', 'ok');
+    pullWatchlistsFromCloud(true).then(()=> startCloudSyncPolling());
+  } else {
+    toast('⚠️ Cloud Sync அணைக்கப்பட்டது', 'err');
+    stopCloudSyncPolling();
+  }
+}
+
+function formatSyncTime(ts){
+  if(!ts) return '';
+  const d = new Date(ts);
+  const now = new Date();
+  const sameDay = d.toDateString() === now.toDateString();
+  const timePart = d.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' });
+  return sameDay ? timePart : (d.toLocaleDateString('en-IN') + ' ' + timePart);
+}
+
+function setCloudSyncStatus(state, dataUpdatedAt){
+  const el = document.getElementById('cloudSyncStatus');
+  if(!el) return;
+  if(state==='off'){ el.textContent = '☁️ Sync Off'; el.title = 'Cloud Sync அமைக்கவில்லை — கிளிக் பண்ணி URL அமைக்கவும்'; return; }
+  if(state==='checking'){ el.textContent = '🔄 Sync...'; return; }
+  if(state==='err'){ el.textContent = '❌ Sync பிழை'; el.title = 'கடைசி வெற்றிகரமான Sync: ' + (formatSyncTime(Number(localStorage.getItem(CLOUD_SYNC_UPDATED_KEY)||0)) || 'இல்லை'); return; }
+  if(state==='ok'){
+    const ts = dataUpdatedAt || Number(localStorage.getItem(CLOUD_SYNC_UPDATED_KEY) || 0);
+    el.textContent = ts ? ('☁️ Sync ' + formatSyncTime(ts)) : '☁️ Synced';
+    el.title = ts ? ('Watchlist கடைசியா புதுப்பிக்கப்பட்டது: ' + formatSyncTime(ts)) : '';
+  }
+}
+
+// Push current watchlists to the cloud. Fire-and-forget from mutation sites.
+async function pushWatchlistsToCloud(){
+  const url = getCloudSyncUrl();
+  if(!url) return;
+  setCloudSyncStatus('checking');
+  const ts = Date.now();
+  try{
+    const res = await fetch(url, {
+      method:'POST',
+      headers:{ 'Content-Type':'text/plain;charset=utf-8' }, // avoids CORS preflight on Apps Script
+      body: JSON.stringify({
+        action:'set',
+        updatedAt: ts,
+        watchlists: App.watchlists,
+        activeWatchlistId: App.activeWatchlistId,
+        watchlistView: App.watchlistView
+      })
+    });
+    const data = await res.json().catch(()=>({}));
+    if(data && data.status===false) throw new Error(data.message||'Sync save failed');
+    localStorage.setItem(CLOUD_SYNC_UPDATED_KEY, String(ts));
+    setCloudSyncStatus('ok', ts);
+  }catch(err){
+    console.error('Dhass Trade Terminal - cloud sync push failed:', err);
+    setCloudSyncStatus('err');
+  }
+}
+
+// Pull cloud state and merge in if it's newer than what we last applied.
+// force=true always applies (used right after setting a new URL).
+async function pullWatchlistsFromCloud(force){
+  const url = getCloudSyncUrl();
+  if(!url || cloudSyncInFlight) return;
+  cloudSyncInFlight = true;
+  setCloudSyncStatus('checking');
+  try{
+    const res = await fetch(url + (url.includes('?')?'&':'?') + 'action=get&_ts=' + Date.now(), { cache: 'no-store' });
+    const data = await res.json();
+    let latestKnownTs = Number(localStorage.getItem(CLOUD_SYNC_UPDATED_KEY) || 0);
+    if(data && data.watchlists && Array.isArray(data.watchlists) && data.watchlists.length>0){
+      const lastApplied = latestKnownTs;
+      if(force || (data.updatedAt && data.updatedAt > lastApplied)){
+        App.watchlists = data.watchlists;
+        App.activeWatchlistId = data.activeWatchlistId && App.watchlists.find(w=>w.id===data.activeWatchlistId) ? data.activeWatchlistId : App.watchlists[0].id;
+        if(data.watchlistView) App.watchlistView = data.watchlistView;
+        persist();
+        latestKnownTs = data.updatedAt || Date.now();
+        localStorage.setItem(CLOUD_SYNC_UPDATED_KEY, String(latestKnownTs));
+        renderWatchlistTable(); refreshWatchlistQuotes(); refreshWatchlistRecommendations();
+        toast('☁️ மற்ற கணினியில் இருந்து Watchlist புதுப்பிக்கப்பட்டது','ok');
+      } else if(data.updatedAt){
+        latestKnownTs = data.updatedAt;
+      }
+    }
+    setCloudSyncStatus('ok', latestKnownTs);
+  }catch(err){
+    console.error('Dhass Trade Terminal - cloud sync pull failed:', err);
+    setCloudSyncStatus('err');
+  } finally {
+    cloudSyncInFlight = false;
+  }
+}
+
+function startCloudSyncPolling(){
+  stopCloudSyncPolling();
+  if(!getCloudSyncUrl()) return;
+  cloudSyncTimer = setInterval(()=> pullWatchlistsFromCloud(false), 15000); // check every 15s
+}
+function stopCloudSyncPolling(){
+  if(cloudSyncTimer){ clearInterval(cloudSyncTimer); cloudSyncTimer = null; }
+}
+
+async function forcePushNow(){
+  const url = getCloudSyncUrl();
+  if(!url){ toast('முதலில் ☁️ Sync அமை-ல் URL அமைக்கவும்','err'); return; }
+  const count = App.watchlists.length;
+  const total = App.watchlists.reduce((s,w)=>s+w.stocks.length,0);
+  if(!confirm(`இந்த கணினியில் உள்ள ${count} watchlist (${total} stocks) Cloud-க்கு அனுப்பப்படும், மற்ற கணினியில் Cloud-ல் இருந்தது மாற்றி எழுதப்படும். தொடரலாமா?`)) return;
+  await pushWatchlistsToCloud();
+  toast('⬆️ இந்த கணினியின் Watchlist Cloud-க்கு அனுப்பப்பட்டது','ok');
+}
+async function forcePullNow(){
+  const url = getCloudSyncUrl();
+  if(!url){ toast('முதலில் ☁️ Sync அமை-ல் URL அமைக்கவும்','err'); return; }
+  if(!confirm('Cloud-ல் உள்ள Watchlist இந்த கணினிக்கு இழுத்து போடப்படும், இங்கு இப்போ உள்ளது மாற்றி எழுதப்படும். தொடரலாமா?')) return;
+  await pullWatchlistsFromCloud(true);
+  toast('⬇️ Cloud-ல் இருந்து Watchlist இந்த கணினிக்கு போடப்பட்டது','ok');
+}
+function syncWatchlistsToCloudSoon(){
+  if(!getCloudSyncUrl()) return;
+  pushWatchlistsToCloud();
+}
+
+/* ---------------- Scrip master search ---------------- */
+const SCRIP_PROXY_KEY = CLOUD_SYNC_KEY; // same Apps Script link now serves both scrip-proxy and watchlist-sync
+function getScripProxyUrl(){ return localStorage.getItem(SCRIP_PROXY_KEY) || ''; }
+function promptScripProxyUrl(){
+  const current = getScripProxyUrl();
+  const val = prompt('Dhass Trade Terminal Backend (Apps Script) Web App URL-ஐ ஒட்டவும்:\n(Dhass-Trade-Terminal-Unified-Backend-Code.gs-ஐ Deploy செய்த பிறகு கிடைக்கும் URL — இதே URL ஸ்டாக் லிஸ்ட் Proxy-க்கும், Watchlist Cloud Sync-க்கும் பயன்படும்)', current);
+  if(val === null) return;
+  const url = val.trim();
+  localStorage.setItem(SCRIP_PROXY_KEY, url);
+  App.scripMaster = null; // force re-fetch with new source
+  setCloudSyncStatus(url ? 'checking' : 'off');
+  toast(url ? '✅ Backend URL சேமிக்கப்பட்டது (Proxy + Sync இரண்டுக்கும்)' : '⚠️ Backend URL நீக்கப்பட்டது', url ? 'ok' : 'err');
+  if(url){ pullWatchlistsFromCloud(true).then(()=> startCloudSyncPolling()); }
+  else { stopCloudSyncPolling(); }
+}
+
+async function ensureScripMaster(){
+  if(App.scripMaster) return App.scripMaster;
+  toast('ஸ்டாக் லிஸ்ட் ஏற்றப்படுகிறது (முதல் தடவை மட்டும்)...');
+  const proxyUrl = getScripProxyUrl();
+  const targetUrl = proxyUrl || 'https://margincalculator.angelone.in/OpenAPI_File/files/OpenAPIScripMaster.json';
+  let res;
+  try{
+    res = await fetch(targetUrl);
+  }catch(networkErr){
+    console.error('Dhass Trade Terminal - scrip master fetch failed (network/CORS):', networkErr);
+    if(!proxyUrl){
+      throw new Error('நேரடி இணைப்பு தடுக்கப்பட்டது (CORS). மேலே "⚙️ Proxy அமை" பொத்தான் மூலம் Apps Script proxy URL-ஐ அமைக்கவும்.');
+    }
+    throw new Error('Proxy-ஐ அணுக முடியவில்லை: ' + networkErr.message);
+  }
+  if(!res.ok){
+    console.error('Dhass Trade Terminal - scrip master HTTP error:', res.status, res.statusText);
+    throw new Error('ஸ்டாக் லிஸ்ட் சர்வர் பிழை: HTTP ' + res.status);
+  }
+  const json = await res.json();
+  if(json && json.success === false){
+    throw new Error(json.error || 'Proxy பிழை');
+  }
+  // filter to NSE equity + index only, to keep memory light (already filtered if via proxy, harmless to re-filter)
+  App.scripMaster = json.filter(x => (x.exch_seg === 'NSE') && (x.symbol && (x.symbol.endsWith('-EQ') || x.instrumenttype === '' || x.name)));
+  return App.scripMaster;
+}
+async function searchScrip(query){
+  const list = await ensureScripMaster();
+  const q = query.toUpperCase();
+  const results = [];
+  for(const item of list){
+    if(item.symbol && item.symbol.toUpperCase().includes(q)){
+      results.push(item);
+      if(results.length >= 15) break;
+    }
+  }
+  return results;
+}
+function bindSearchBox(inputId, dropdownId, onSelect){
+  const input = document.getElementById(inputId);
+  const dropdown = document.getElementById(dropdownId);
+  let debounce;
+  input.addEventListener('input', ()=>{
+    clearTimeout(debounce);
+    const q = input.value.trim();
+    if(q.length < 2){ dropdown.classList.remove('show'); return; }
+    if(!App.scripMaster){
+      dropdown.innerHTML = '<div class="searchRow"><span>⏳ ஸ்டாக் லிஸ்ட் முதல் தடவை ஏற்றப்படுகிறது... (பெரிய கோப்பு, சிறிது நேரம் ஆகலாம்)</span></div>';
+      dropdown.classList.add('show');
+    }
+    debounce = setTimeout(async ()=>{
+      try{
+        const results = await searchScrip(q);
+        dropdown.innerHTML = results.map(r => `<div class="searchRow" data-token="${r.token}" data-symbol="${r.symbol}" data-name="${(r.name||'').replace(/"/g,'')}" data-exch="${r.exch_seg}">
+          <span>${r.symbol.replace('-EQ','')}</span><small>${r.name||''}</small></div>`).join('') || '<div class="searchRow"><span>கிடைக்கல</span></div>';
+        dropdown.classList.add('show');
+        dropdown.querySelectorAll('.searchRow[data-token]').forEach(row=>{
+          row.addEventListener('click', ()=>{
+            onSelect({ token: row.dataset.token, symbol: row.dataset.symbol, name: row.dataset.name, exch: row.dataset.exch });
+            dropdown.classList.remove('show');
+            input.value = '';
+          });
+        });
+      }catch(e){
+        console.error('Dhass Trade Terminal - search error:', e);
+        dropdown.innerHTML = '<div class="searchRow"><span>⚠️ தேடல் பிழை: ' + (e.message || 'தெரியாத பிழை') + '</span></div>';
+        dropdown.classList.add('show');
+        toast('தேடல் பிழை: '+e.message, 'err');
+      }
+    }, 300);
+  });
+  document.addEventListener('click', (e)=>{ if(!dropdown.contains(e.target) && e.target !== input) dropdown.classList.remove('show'); });
+}
+
+/* ---------------- Quotes ---------------- */
+const NIFTY_TOKEN = '99926000'; // NSE Nifty 50 index token
+async function getQuotes(exchTokenMap, mode){
+  mode = mode || 'FULL';
+  if(App.mode === 'live' && App.session){
+    await refreshSessionIfNeeded();
+    const res = await fetch(BASE + '/rest/secure/angelbroking/market/v1/quote/', {
+      method:'POST', headers: commonHeaders(),
+      body: JSON.stringify({ mode, exchangeTokens: exchTokenMap })
+    });
+    const data = await safeJson(res);
+    if(data.status) return data.data.fetched || [];
+    throw new Error(data.message || 'Quote fetch failed');
+  } else {
+    // Paper mode without live session: can't fetch real LTP without creds.
+    throw new Error('Paper mode-ல live LTP காட்ட Angel One credentials தேவை (Settings-ல login பண்ணுங்க)');
+  }
+}
+
+/* ---------------- Watchlist ---------------- */
+const WL_COLS = {
+  compact: [
+    { key:'ltp', label:'LTP' }, { key:'chg', label:'Chg' }, { key:'chgp', label:'Chg%' }
+  ],
+  expanded: [
+    { key:'ltp', label:'LTP' }, { key:'chg', label:'Chg' }, { key:'chgp', label:'Chg%' },
+    { key:'open', label:'Open' }, { key:'prevclose', label:'Prev Close' },
+    { key:'high', label:'High' }, { key:'low', label:'Low' },
+    { key:'volume', label:'Volume' }, { key:'atp', label:'ATP' },
+    { key:'bid', label:'Bid' }, { key:'ask', label:'Ask' },
+    { key:'uc', label:'Upper Ckt' }, { key:'lc', label:'Lower Ckt' },
+    { key:'w52h', label:'52W High' }, { key:'w52l', label:'52W Low' }
+  ]
+};
+function addToWatchlist(item){
+  const list = activeList();
+  if(list.stocks.find(w => w.token === item.token)){ toast('ஏற்கனவே இருக்கு'); return; }
+  list.stocks.push({ symbol: item.symbol, token: item.token, exch: item.exch, name: item.name });
+  persist();
+  renderWatchlistTable();
+  refreshWatchlistQuotes();
+  refreshWatchlistRecommendations();
+  syncWatchlistsToCloudSoon();
+}
+function removeFromWatchlist(token){
+  const list = activeList();
+  list.stocks = list.stocks.filter(w => w.token !== token);
+  persist();
+  renderWatchlistTable();
+  syncWatchlistsToCloudSoon();
+}
+function newWatchlistPrompt(){
+  if(App.watchlists.length >= 5){ toast('அதிகபட்சம் 5 Watchlist தான்','err'); return; }
+  const name = prompt('புது Watchlist பெயர்:', 'Watchlist '+(App.watchlists.length+1));
+  if(!name) return;
+  const id = 'wl_'+Date.now();
+  App.watchlists.push({ id, name:name.trim().slice(0,30), stocks:[], pinned:false, favourite:false });
+  App.activeWatchlistId = id;
+  persist(); renderWatchlistTable(); refreshWatchlistQuotes(); refreshWatchlistRecommendations();
+  syncWatchlistsToCloudSoon();
+}
+function renameWlPrompt(id){
+  const wl = App.watchlists.find(w=>w.id===id); if(!wl) return;
+  const name = prompt('Rename:', wl.name);
+  if(!name) return;
+  wl.name = name.trim().slice(0,30);
+  persist(); renderWatchlistTable();
+  syncWatchlistsToCloudSoon();
+}
+function deleteWlPrompt(id){
+  if(App.watchlists.length<=1){ toast('கடைசி Watchlist-ஐ Delete பண்ண முடியாது','err'); return; }
+  const wl = App.watchlists.find(w=>w.id===id); if(!wl) return;
+  if(!confirm(`"${wl.name}" (${wl.stocks.length} stocks) Delete பண்ணலாமா?`)) return;
+  App.watchlists = App.watchlists.filter(w=>w.id!==id);
+  if(App.activeWatchlistId===id) App.activeWatchlistId = App.watchlists[0].id;
+  persist(); renderWatchlistTable(); refreshWatchlistQuotes(); refreshWatchlistRecommendations();
+  syncWatchlistsToCloudSoon();
+}
+function moveWl(id, dir){
+  const idx = App.watchlists.findIndex(w=>w.id===id);
+  const newIdx = idx+dir;
+  if(newIdx<0 || newIdx>=App.watchlists.length) return;
+  const [wl] = App.watchlists.splice(idx,1);
+  App.watchlists.splice(newIdx,0,wl);
+  persist(); renderWatchlistTable();
+  syncWatchlistsToCloudSoon();
+}
+function toggleWlPin(id){
+  const wl = App.watchlists.find(w=>w.id===id); if(!wl) return;
+  wl.pinned = !wl.pinned; persist(); renderWatchlistTable();
+  syncWatchlistsToCloudSoon();
+}
+function toggleWlFav(id){
+  const wl = App.watchlists.find(w=>w.id===id); if(!wl) return;
+  wl.favourite = !wl.favourite; persist(); renderWatchlistTable();
+  syncWatchlistsToCloudSoon();
+}
+function switchWatchlist(id){
+  App.activeWatchlistId = id;
+  persist(); renderWatchlistTable(); refreshWatchlistQuotes(); refreshWatchlistRecommendations();
+  syncWatchlistsToCloudSoon();
+}
+function setWatchlistView(view){
+  App.watchlistView = view; persist(); renderWatchlistTable(); refreshWatchlistQuotes(); refreshWatchlistRecommendations();
+}
+function renderWatchlistTable(){
+  // tabs row
+  const tabsEl = document.getElementById('wlTabsRow');
+  const ordered = [...App.watchlists].sort((a,b)=> (b.pinned?1:0)-(a.pinned?1:0));
+  tabsEl.innerHTML = ordered.map(wl=>{
+    const idx = App.watchlists.findIndex(w=>w.id===wl.id);
+    return `<div class="wlTab ${wl.id===App.activeWatchlistId?'active':''}">
+      <span class="wlTabName" onclick="switchWatchlist('${wl.id}')">${wl.pinned?'📌':''}${wl.favourite?'⭐':''} ${escapeHtml(wl.name)} <small>(${wl.stocks.length})</small></span>
+      <span class="wlTabActions">
+        <button class="wlIconBtn" title="Pin" onclick="toggleWlPin('${wl.id}')">📌</button>
+        <button class="wlIconBtn" title="Favourite" onclick="toggleWlFav('${wl.id}')">⭐</button>
+        <button class="wlIconBtn" title="Rename" onclick="renameWlPrompt('${wl.id}')">✏</button>
+        <button class="wlIconBtn" title="இடது நகர்த்து" ${idx===0?'disabled':''} onclick="moveWl('${wl.id}',-1)">⬅</button>
+        <button class="wlIconBtn" title="வலது நகர்த்து" ${idx===App.watchlists.length-1?'disabled':''} onclick="moveWl('${wl.id}',1)">➡</button>
+        <button class="wlIconBtn" title="Delete" onclick="deleteWlPrompt('${wl.id}')">🗑</button>
+      </span>
+    </div>`;
+  }).join('') + `<button class="btnSmGhost" id="btnNewWatchlist">➕ New</button>`;
+  document.getElementById('btnNewWatchlist').addEventListener('click', newWatchlistPrompt);
+
+  // view toggle buttons
+  document.getElementById('wlViewCompact').classList.toggle('active', App.watchlistView==='compact');
+  document.getElementById('wlViewExpanded').classList.toggle('active', App.watchlistView==='expanded');
+
+  // table
+  const list = activeList();
+  // sort control
+  const sortSel = document.getElementById('wlSortMode');
+  sortSel.value = (list && list.sortMode) || 'added';
+
+  const cols = WL_COLS[App.watchlistView] || WL_COLS.compact;
+  const thead = document.querySelector('#watchlistTable thead tr');
+  thead.innerHTML = '<th>சிம்பல்</th><th>பரிந்துரை</th>' + cols.map(c=>`<th>${c.label}</th>`).join('') + '<th></th>';
+  const body = document.getElementById('watchlistBody');
+  if(!list || list.stocks.length === 0){
+    body.innerHTML = `<tr><td colspan="${cols.length+3}" class="emptyState">"${list?escapeHtml(list.name):''}" வாட்ச்லிஸ்ட் காலியாக இருக்கு</td></tr>`;
+    return;
+  }
+  const sortMode = list.sortMode || 'added';
+  let stocksOrdered = list.stocks;
+  if(sortMode !== 'added'){
+    stocksOrdered = [...list.stocks].sort((a,b)=>{
+      if(sortMode === 'nameAsc') return a.symbol.localeCompare(b.symbol);
+      const ca = App.quoteCache[a.token], cb = App.quoteCache[b.token];
+      const va = ca ? ca.chgp : -Infinity, vb = cb ? cb.chgp : -Infinity;
+      return sortMode === 'chgpDesc' ? (vb-va) : (va-vb);
+    });
+  }
+  const wlQuery = (App.wlSearchQuery||'').trim().toUpperCase();
+  if(wlQuery){
+    stocksOrdered = stocksOrdered.filter(w => w.symbol.toUpperCase().includes(wlQuery));
+    if(stocksOrdered.length === 0){
+      body.innerHTML = `<tr><td colspan="${cols.length+3}" class="emptyState">"${escapeHtml(wlQuery)}"-க்கு பொருத்தம் இல்லை</td></tr>`;
+      return;
+    }
+  }
+  body.innerHTML = stocksOrdered.map(w => `
+    <tr data-token="${w.token}">
+      <td class="rowClick" onclick="copyStockSymbol('${w.symbol}')">${w.symbol.replace('-EQ','')}${orderBtnsHtml(w.symbol, w.token, w.exch)}</td>
+      <td class="signal"><span class="recoBadge neu">—</span></td>
+      ${cols.map(c=>`<td class="${c.key}">—</td>`).join('')}
+      <td><button class="iconBtn" onclick="removeFromWatchlist('${w.token}')">✕</button></td>
+    </tr>`).join('');
+  applyQuoteCacheToRows();
+}
+function applyQuoteCacheToRows(){
+  document.querySelectorAll('#watchlistBody tr[data-token]').forEach(row=>{
+    const token = row.dataset.token;
+    const q = App.quoteCache[token];
+    if(q) paintWatchlistRow(row, q);
+    const recoHtml = App.recoCache[token];
+    if(recoHtml){ const cell = row.querySelector('.signal'); if(cell) cell.innerHTML = recoHtml; }
+  });
+}
+function setWlSortMode(mode){
+  const list = activeList(); if(!list) return;
+  list.sortMode = mode; persist(); renderWatchlistTable();
+}
+const QUOTE_BATCH_SIZE = 50; // Angel One quote API caps total symbols per call — chunk larger watchlists
+async function fetchQuotesBatched(exchTokenMap){
+  // flatten to [exch,token] pairs, chunk into groups of QUOTE_BATCH_SIZE, fetch each batch, merge
+  const pairs = [];
+  Object.keys(exchTokenMap).forEach(exch => exchTokenMap[exch].forEach(tok => pairs.push([exch, tok])));
+  const results = [];
+  for(let i=0; i<pairs.length; i+=QUOTE_BATCH_SIZE){
+    const chunk = pairs.slice(i, i+QUOTE_BATCH_SIZE);
+    const chunkMap = {};
+    chunk.forEach(([exch,tok])=>{ chunkMap[exch] = chunkMap[exch] || []; chunkMap[exch].push(tok); });
+    try{
+      const fetched = await getQuotes(chunkMap, 'FULL');
+      results.push(...fetched);
+    }catch(e){ /* this batch failed — keep going with the rest */ }
+  }
+  return results;
+}
+async function refreshWatchlistQuotes(){
+  refreshNiftyBar(); // piggy-back the index refresh on the same cadence
+  const list = activeList();
+  if(!list || list.stocks.length === 0) return;
+  if(!(App.mode === 'live' && App.session)){ return; }
+  const map = {};
+  list.stocks.forEach(w => { map[w.exch] = map[w.exch] || []; map[w.exch].push(w.token); });
+  try{
+    const fetched = await fetchQuotesBatched(map);
+    fetched.forEach(q=>{
+      const chg = q.netChange!=null ? q.netChange : (q.ltp - q.close);
+      const chgp = q.percentChange!=null ? q.percentChange : (q.close ? (chg/q.close*100) : 0);
+      App.quoteCache[q.symbolToken] = { ltp:q.ltp, chg, chgp, open:q.open, high:q.high, low:q.low,
+        prevclose:q.close, volume:q.tradeVolume, atp:q.avgPrice,
+        bid:(q.depth&&q.depth.buy&&q.depth.buy[0])?q.depth.buy[0].price:null,
+        ask:(q.depth&&q.depth.sell&&q.depth.sell[0])?q.depth.sell[0].price:null,
+        uc:q.upperCircuit, lc:q.lowerCircuit, w52h:q['52WeekHigh'], w52l:q['52WeekLow'] };
+    });
+    applyQuoteCacheToRows();
+    // if sorted by Chg%, values just changed — re-render to keep gainers/losers order fresh
+    if(list.sortMode === 'chgpDesc' || list.sortMode === 'chgpAsc') renderWatchlistTable();
+    updateTicker(fetched);
+  }catch(e){ /* silent */ }
+}
+function paintWatchlistRow(row, q){
+  const set = (cls, txt) => { const el = row.querySelector('.'+cls); if(el) el.innerHTML = txt; };
+  set('ltp', q.ltp!=null ? q.ltp.toFixed(2) + w52BadgeFor(q) : '—');
+  set('chg', q.chg!=null ? `<span class="${q.chg>=0?'upv':'downv'}">${q.chg>=0?'+':''}${q.chg.toFixed(2)}</span>` : '—');
+  set('chgp', q.chgp!=null ? `<span class="${q.chg>=0?'upv':'downv'}">${q.chg>=0?'+':''}${q.chgp.toFixed(2)}%</span>` : '—');
+  set('high', q.high!=null ? q.high.toFixed(2) : '—');
+  set('low', q.low!=null ? q.low.toFixed(2) : '—');
+  set('open', q.open!=null ? q.open.toFixed(2) : '—');
+  set('prevclose', q.prevclose!=null ? q.prevclose.toFixed(2) : '—');
+  set('volume', q.volume!=null ? `<span class="${Number(q.volume)>1000000?'vGreen':'vOrange'}">${Number(q.volume).toLocaleString('en-IN')}</span>` : '—');
+  set('atp', q.atp!=null ? `<span class="vLightBlue">${q.atp.toFixed(2)}</span>` : '—');
+  set('bid', q.bid!=null ? q.bid.toFixed(2) : '—');
+  set('ask', q.ask!=null ? q.ask.toFixed(2) : '—');
+  set('uc', q.uc!=null ? `<span class="vGreen">${q.uc.toFixed(2)}</span>` : '—');
+  set('lc', q.lc!=null ? `<span class="vRed">${q.lc.toFixed(2)}</span>` : '—');
+  set('w52h', q.w52h!=null ? `<span class="vGreen">${q.w52h.toFixed(2)}</span>` : '—');
+  set('w52l', q.w52l!=null ? `<span class="vRed">${q.w52l.toFixed(2)}</span>` : '—');
+}
+function w52BadgeFor(q){
+  if(q.ltp==null) return '';
+  if(q.w52h!=null && q.ltp >= q.w52h) return ' <span class="w52Badge high">🚀 52W High</span>';
+  if(q.w52l!=null && q.ltp <= q.w52l) return ' <span class="w52Badge low">🔻 52W Low</span>';
+  return '';
+}
+async function refreshNiftyBar(){
+  if(!(App.mode === 'live' && App.session)) return;
+  try{
+    const fetched = await getQuotes({ NSE:[NIFTY_TOKEN] }, 'FULL');
+    const q = fetched && fetched[0]; if(!q) return;
+    const chg = q.netChange!=null ? q.netChange : (q.ltp - q.close);
+    const chgp = q.percentChange!=null ? q.percentChange : (q.close ? (chg/q.close*100) : 0);
+    const cls = chg>=0 ? 'upv' : 'downv';
+    document.getElementById('niftyLtp').innerHTML = q.ltp!=null ? q.ltp.toFixed(2) : '—';
+    document.getElementById('niftyChg').innerHTML = `<span class="${cls}">${chg>=0?'+':''}${chg.toFixed(2)}</span>`;
+    document.getElementById('niftyChgp').innerHTML = `<span class="${cls}">${chg>=0?'+':''}${chgp.toFixed(2)}%</span>`;
+    document.getElementById('niftyOpen').innerHTML = q.open!=null ? q.open.toFixed(2) : '—';
+    document.getElementById('niftyHigh').innerHTML = q.high!=null ? q.high.toFixed(2) : '—';
+    document.getElementById('niftyLow').innerHTML = q.low!=null ? q.low.toFixed(2) : '—';
+    document.getElementById('niftyClose').innerHTML = q.close!=null ? q.close.toFixed(2) : '—';
+  }catch(e){ /* silent */ }
+}
+const WORLD_MARKET_FIELDS = [
+  ['dowJones','wmDow'], ['nasdaq','wmNasdaq'], ['nikkei','wmNikkei'],
+  ['shanghai','wmShanghai'], ['crudeOil','wmCrude'], ['naturalGas','wmNatGas'],
+  ['gold','wmGold'], ['usdInr','wmUsdinr']
+];
+let __worldMktBusy = false;
+async function refreshWorldMarkets(){
+  const url = getScripProxyUrl(); // same unified backend URL used for scrip proxy + cloud sync
+  const el = document.getElementById('worldBar');
+  if(!url){ if(el) el.title = 'உலக சந்தை தரவுக்கு ⚙️ Proxy அமை-ல் Unified Backend URL தேவை'; return; }
+  if(__worldMktBusy) return;
+  __worldMktBusy = true;
+  try{
+    const res = await fetch(url + (url.includes('?')?'&':'?') + 'action=global&_ts=' + Date.now(), { cache: 'no-store' });
+    const data = await res.json();
+    if(!data || data.status===false) return;
+    WORLD_MARKET_FIELDS.forEach(([key, id])=>{
+      const item = data[key];
+      const target = document.getElementById(id);
+      if(!target) return;
+      if(!item || item.price==null){ target.innerHTML = '—'; return; }
+      const chg = item.change!=null ? item.change : 0;
+      const chgp = item.changePercent!=null ? item.changePercent : 0;
+      const cls = chg>=0 ? 'upv' : 'downv';
+      target.innerHTML = `${item.price.toFixed(2)} <span class="${cls}" style="font-size:11px;">${chg>=0?'+':''}${chgp.toFixed(2)}%</span>`;
+    });
+    const sgx = data.sgxNifty;
+    if(sgx && sgx.last!=null){
+      const chg = sgx.change!=null ? sgx.change : 0;
+      const cls = chg>=0 ? 'upv' : 'downv';
+      document.getElementById('sgxLast').innerHTML = sgx.last.toFixed(2);
+      document.getElementById('sgxChg').innerHTML = `<span class="${cls}">${chg>=0?'+':''}${chg.toFixed(2)}</span>`;
+      document.getElementById('sgxChgp').innerHTML = sgx.changePercent!=null ? `<span class="${cls}">${chg>=0?'+':''}${sgx.changePercent.toFixed(2)}%</span>` : '—';
+      document.getElementById('sgxOpen').innerHTML = sgx.open!=null ? sgx.open.toFixed(2) : '—';
+      document.getElementById('sgxHigh').innerHTML = sgx.high!=null ? sgx.high.toFixed(2) : '—';
+      document.getElementById('sgxLow').innerHTML = sgx.low!=null ? sgx.low.toFixed(2) : '—';
+    }
+  }catch(e){ /* silent */ } finally { __worldMktBusy = false; }
+}
+
+/* ---------------- All Stocks (Chart tab) ---------------- */
+let __allStocksBusy = false;
+async function loadAllStocks(){
+  if(__allStocksBusy) return;
+  if(!(App.mode==='live' && App.session)){ toast('Live login தேவை','err'); return; }
+  __allStocksBusy = true;
+  const statusEl = document.getElementById('allStocksStatus');
+  try{
+    statusEl.textContent = 'ஸ்டாக் லிஸ்ட் ஏற்றப்படுகிறது...';
+    const master = await ensureScripMaster();
+    const eqOnly = master.filter(x => x.symbol && x.symbol.endsWith('-EQ'));
+    App.allStocksList = eqOnly.map(x => ({ symbol:x.symbol, token:x.token, exch:x.exch_seg, name:x.name }));
+    const map = { NSE: App.allStocksList.map(s=>s.token) };
+    const pairs = []; Object.keys(map).forEach(exch => map[exch].forEach(tok => pairs.push([exch,tok])));
+    const totalBatches = Math.ceil(pairs.length / QUOTE_BATCH_SIZE);
+    for(let i=0, batchNo=1; i<pairs.length; i+=QUOTE_BATCH_SIZE, batchNo++){
+      statusEl.textContent = `Quote data ஏற்றப்படுகிறது... batch ${batchNo}/${totalBatches} (${App.allStocksList.length} stocks)`;
+      const chunk = pairs.slice(i, i+QUOTE_BATCH_SIZE);
+      const chunkMap = {}; chunk.forEach(([exch,tok])=>{ chunkMap[exch]=chunkMap[exch]||[]; chunkMap[exch].push(tok); });
+      try{
+        const fetched = await getQuotes(chunkMap, 'FULL');
+        fetched.forEach(q=>{
+          const chg = q.netChange!=null ? q.netChange : (q.ltp - q.close);
+          const chgp = q.percentChange!=null ? q.percentChange : (q.close ? (chg/q.close*100) : 0);
+          App.quoteCache[q.symbolToken] = { ltp:q.ltp, chg, chgp, open:q.open, high:q.high, low:q.low,
+            prevclose:q.close, volume:q.tradeVolume, atp:q.avgPrice,
+            bid:(q.depth&&q.depth.buy&&q.depth.buy[0])?q.depth.buy[0].price:null,
+            ask:(q.depth&&q.depth.sell&&q.depth.sell[0])?q.depth.sell[0].price:null,
+            uc:q.upperCircuit, lc:q.lowerCircuit, w52h:q['52WeekHigh'], w52l:q['52WeekLow'] };
+        });
+      }catch(e){ /* this batch failed — continue with the rest */ }
+      await new Promise(r=>setTimeout(r, 300)); // respect Angel One rate limits across ~batches
+    }
+    App.allStocksLoaded = true;
+    statusEl.textContent = `${App.allStocksList.length} stocks ஏற்றப்பட்டது. (பரிந்துரை இந்த பட்டியலில் கணக்கிடப்படாது — API வரம்பு காரணமா, "பிரி-மார்க்கெட்" tab-ல் Top 100-க்கு மட்டும் கிடைக்கும்.)`;
+    renderAllStocksTable();
+    toast('✅ அனைத்து ஸ்டாக்குகளும் ஏற்றப்பட்டது','ok');
+  }catch(err){
+    console.error('Dhass Trade Terminal - loadAllStocks failed:', err);
+    statusEl.textContent = 'ஏற்றுவதில் பிழை: ' + err.message;
+    toast('❌ Load பிழை: ' + err.message, 'err');
+  } finally { __allStocksBusy = false; }
+}
+function sortStockList(list, mode){
+  if(mode==='nameAsc') return [...list].sort((a,b)=>a.symbol.localeCompare(b.symbol));
+  return [...list].sort((a,b)=>{
+    const ca = App.quoteCache[a.token], cb = App.quoteCache[b.token];
+    if(mode==='volDesc'){ const va=ca?(ca.volume||0):-1, vb=cb?(cb.volume||0):-1; return vb-va; }
+    const va = ca ? ca.chgp : -Infinity, vb = cb ? cb.chgp : -Infinity;
+    return mode==='chgpDesc' ? (vb-va) : (va-vb);
+  });
+}
+function applyAllStocksPriceFilter(){
+  const minV = document.getElementById('allStocksPriceMin').value;
+  const maxV = document.getElementById('allStocksPriceMax').value;
+  App.allStocksPriceMin = minV!=='' ? Number(minV) : null;
+  App.allStocksPriceMax = maxV!=='' ? Number(maxV) : null;
+  updateAllStocksClearVisibility();
+  renderAllStocksTable();
+}
+function clearAllStocksFilters(){
+  App.allStocksPriceMin = null; App.allStocksPriceMax = null; App.allStocksSearchQuery = '';
+  document.getElementById('allStocksPriceMin').value = '';
+  document.getElementById('allStocksPriceMax').value = '';
+  document.getElementById('allStocksSearchInput').value = '';
+  updateAllStocksClearVisibility();
+  renderAllStocksTable();
+}
+function updateAllStocksClearVisibility(){
+  const active = App.allStocksPriceMin!=null || App.allStocksPriceMax!=null || (App.allStocksSearchQuery||'').trim()!=='';
+  document.getElementById('allStocksClearStat').style.display = active ? 'inline-flex' : 'none';
+}
+function renderAllStocksTable(){
+  const cols = WL_COLS[App.allStocksView] || WL_COLS.expanded;
+  const thead = document.querySelector('#allStocksTable thead tr');
+  thead.innerHTML = '<th>சிம்பல்</th>' + cols.map(c=>`<th>${c.label}</th>`).join('');
+  const body = document.getElementById('allStocksBody');
+  if(!App.allStocksList.length){ body.innerHTML = `<tr><td colspan="${cols.length+1}" class="emptyState">Load பண்ணப்படல</td></tr>`; return; }
+  let ordered = sortStockList(App.allStocksList, App.allStocksSortMode);
+  const query = (App.allStocksSearchQuery||'').trim().toUpperCase();
+  if(query) ordered = ordered.filter(w => w.symbol.toUpperCase().includes(query));
+  if(App.allStocksPriceMin!=null || App.allStocksPriceMax!=null){
+    ordered = ordered.filter(w=>{
+      const q = App.quoteCache[w.token]; if(!q || q.ltp==null) return false;
+      if(App.allStocksPriceMin!=null && q.ltp < App.allStocksPriceMin) return false;
+      if(App.allStocksPriceMax!=null && q.ltp > App.allStocksPriceMax) return false;
+      return true;
+    });
+  }
+  updateAllStocksClearVisibility();
+  if(!ordered.length){ body.innerHTML = `<tr><td colspan="${cols.length+1}" class="emptyState">பொருத்தம் இல்லை</td></tr>`; return; }
+  body.innerHTML = ordered.map(w => `
+    <tr data-token="${w.token}">
+      <td class="rowClick" onclick="copyStockSymbol('${w.symbol}')">${w.symbol.replace('-EQ','')}${orderBtnsHtml(w.symbol, w.token, w.exch)}</td>
+      ${cols.map(c=>`<td class="${c.key}">—</td>`).join('')}
+    </tr>`).join('');
+  document.querySelectorAll('#allStocksBody tr[data-token]').forEach(row=>{
+    const q = App.quoteCache[row.dataset.token];
+    if(q) paintWatchlistRow(row, q);
+  });
+}
+
+/* ---------------- Pre-market (High Volume) ---------------- */
+let __premarketBusy = false;
+async function loadPremarket(){
+  if(__premarketBusy) return;
+  if(!(App.mode==='live' && App.session)){ toast('Live login தேவை','err'); return; }
+  __premarketBusy = true;
+  const statusEl = document.getElementById('premarketStatus');
+  try{
+    if(!App.allStocksLoaded){
+      statusEl.textContent = 'முதலில் அனைத்து ஸ்டாக் விவரமும் ஏற்றப்படுகிறது...';
+      await loadAllStocks();
+    }
+    const topN = sortStockList(App.allStocksList, 'volDesc').slice(0, 100);
+    App.premarketList = topN;
+    App.premarketReco = {};
+    App.premarketFilter = 'all';
+    document.getElementById('pmClearStat').style.display = 'none';
+    let buy=0, sell=0, neu=0;
+    for(let i=0;i<topN.length;i++){
+      const w = topN[i];
+      statusEl.textContent = `பரிந்துரை கணக்கிடப்படுகிறது... ${i+1}/${topN.length}`;
+      try{
+        const candles = await fetchCandles(w.exch, w.token, 'FIFTEEN_MINUTE');
+        const reco = computeRecommendation(candles);
+        App.premarketReco[w.token] = reco;
+        if(reco.cls==='buy' || reco.cls==='strongbuy') buy++;
+        else if(reco.cls==='sell' || reco.cls==='strongsell') sell++;
+        else neu++;
+      }catch(e){ /* skip this one */ }
+      renderPremarketSummary(buy, sell, neu, topN.length);
+      renderPremarketTable();
+      await new Promise(r=>setTimeout(r, 300));
+    }
+    App.premarketLoaded = true;
+    statusEl.textContent = `Top ${topN.length} High-Volume stocks — பரிந்துரை முடிந்தது.`;
+    toast('✅ பிரி-மார்க்கெட் பட்டியல் தயார்','ok');
+  }catch(err){
+    console.error('Dhass Trade Terminal - loadPremarket failed:', err);
+    statusEl.textContent = 'ஏற்றுவதில் பிழை: ' + err.message;
+  } finally { __premarketBusy = false; }
+}
+function renderPremarketSummary(buy, sell, neu, total){
+  document.getElementById('pmTotal').textContent = total;
+  document.getElementById('pmBuy').textContent = buy;
+  document.getElementById('pmSell').textContent = sell;
+  document.getElementById('pmNeutral').textContent = neu;
+}
+function setPremarketFilter(f){
+  App.premarketFilter = f;
+  document.getElementById('pmClearStat').style.display = (f==='all' && App.premarketPriceMin==null && App.premarketPriceMax==null) ? 'none' : 'inline-flex';
+  renderPremarketTable();
+}
+function applyPremarketPriceFilter(){
+  const minV = document.getElementById('pmPriceMin').value;
+  const maxV = document.getElementById('pmPriceMax').value;
+  App.premarketPriceMin = minV!=='' ? Number(minV) : null;
+  App.premarketPriceMax = maxV!=='' ? Number(maxV) : null;
+  document.getElementById('pmClearStat').style.display = (App.premarketFilter==='all' && App.premarketPriceMin==null && App.premarketPriceMax==null) ? 'none' : 'inline-flex';
+  renderPremarketTable();
+}
+function clearPremarketFilters(){
+  App.premarketFilter = 'all'; App.premarketPriceMin = null; App.premarketPriceMax = null;
+  document.getElementById('pmPriceMin').value = ''; document.getElementById('pmPriceMax').value = '';
+  document.getElementById('pmClearStat').style.display = 'none';
+  renderPremarketTable();
+}
+function renderPremarketTable(){
+  const cols = WL_COLS.expanded;
+  const thead = document.querySelector('#premarketTable thead tr');
+  thead.innerHTML = '<th>சிம்பல்</th><th>பரிந்துரை</th>' + cols.map(c=>`<th>${c.label}</th>`).join('');
+  const body = document.getElementById('premarketBody');
+  const colspan = cols.length + 2;
+  if(!App.premarketList.length){ body.innerHTML = `<tr><td colspan="${colspan}" class="emptyState">Load பண்ணப்படல</td></tr>`; return; }
+  let list = App.premarketList;
+  if(App.premarketFilter==='buy') list = list.filter(w => { const r=App.premarketReco[w.token]; return r && (r.cls==='buy'||r.cls==='strongbuy'); });
+  else if(App.premarketFilter==='sell') list = list.filter(w => { const r=App.premarketReco[w.token]; return r && (r.cls==='sell'||r.cls==='strongsell'); });
+  if(App.premarketPriceMin!=null || App.premarketPriceMax!=null){
+    list = list.filter(w => {
+      const q = App.quoteCache[w.token]; if(!q || q.ltp==null) return false;
+      if(App.premarketPriceMin!=null && q.ltp < App.premarketPriceMin) return false;
+      if(App.premarketPriceMax!=null && q.ltp > App.premarketPriceMax) return false;
+      return true;
+    });
+  }
+  if(!list.length){ body.innerHTML = `<tr><td colspan="${colspan}" class="emptyState">இந்த filter-க்கு stocks இல்ல</td></tr>`; return; }
+  body.innerHTML = list.map(w => {
+    const reco = App.premarketReco[w.token];
+    const recoHtml = reco ? (recoBadgeHtml(reco) + (reco.target!=null ? `<div class="recoLevels">${recoLevelsHtml(reco, {symbol:w.symbol, token:w.token, exch:w.exch})}</div>` : '')) : '<span class="recoBadge neu">—</span>';
+    return `<tr data-token="${w.token}">
+      <td class="rowClick" onclick="copyStockSymbol('${w.symbol}')">${w.symbol.replace('-EQ','')}${orderBtnsHtml(w.symbol, w.token, w.exch)}</td>
+      <td class="signal">${recoHtml}</td>
+      ${cols.map(c=>`<td class="${c.key}">—</td>`).join('')}
+    </tr>`;
+  }).join('');
+  document.querySelectorAll('#premarketBody tr[data-token]').forEach(row=>{
+    const q = App.quoteCache[row.dataset.token];
+    if(q) paintWatchlistRow(row, q);
+  });
+}
+function updateTicker(fetched){
+  const inner = document.getElementById('tickerInner');
+  if(!fetched || fetched.length===0) return;
+  inner.innerHTML = fetched.map(q=>{
+    const chg = q.ltp - q.close;
+    const cls = chg>=0 ? 'tickUp' : 'tickDown';
+    return `<span class="tickItem ${cls}">${q.tradingSymbol||q.symbolToken} ${q.ltp.toFixed(2)} (${chg>=0?'+':''}${chg.toFixed(2)})</span>`;
+  }).join('');
+  // keep scroll speed constant (~70px/sec) regardless of how many stocks are in the ticker,
+  // so a big watchlist doesn't fly past too fast to read
+  const contentWidth = inner.scrollWidth || 800;
+  const duration = Math.max(18, Math.round(contentWidth / 70));
+  inner.style.animation = 'none';
+  void inner.offsetWidth; // force reflow so the animation restarts with the new duration
+  inner.style.animation = `ticker ${duration}s linear infinite`;
+}
+
+/* ---------------- Technical Signal Recommendation (SMA/EMA/RSI/MACD/Bollinger/SuperTrend/VWAP aggregate) ---------------- */
+// NOTE: this is a technical-indicator aggregator, similar to a "Technical Rating" — it is NOT financial advice
+// and does not guarantee direction. It simply counts how many of 7 indicators currently lean bullish vs bearish.
+function computeRecommendation(candles){
+  if(!candles || candles.length < 25) return { label:'தரவு போதாது', score:0, cls:'neu' };
+  const closes = candles.map(c=>c.c);
+  const last = candles[candles.length-1];
+  const lastOf = arr => { for(let i=arr.length-1;i>=0;i--){ if(arr[i]!=null) return arr[i]; } return null; };
+  const smaVals = sma(closes,20), emaVals = ema(closes,50);
+  const rsiVals = rsi(closes,14);
+  const macdVals = macd(closes);
+  const bbVals = bollinger(closes,20,2);
+  const stVals = superTrend(candles,10,3);
+  const vwapVals = vwap(candles);
+  const atrVals = atr(candles,14);
+
+  const lastSma = lastOf(smaVals), lastEma = lastOf(emaVals), lastRsi = lastOf(rsiVals),
+        lastHist = lastOf(macdVals.hist), lastBbMid = lastOf(bbVals.mid),
+        lastVwap = lastOf(vwapVals), lastStDir = lastOf(stVals.dir), lastAtr = lastOf(atrVals);
+
+  let bull=0, bear=0, total=0;
+  if(lastSma!=null){ total++; last.c>lastSma?bull++:bear++; }
+  if(lastEma!=null){ total++; last.c>lastEma?bull++:bear++; }
+  if(lastRsi!=null){ total++; if(lastRsi>55) bull++; else if(lastRsi<45) bear++; else total--; }
+  if(lastHist!=null){ total++; lastHist>0?bull++:bear++; }
+  if(lastBbMid!=null){ total++; last.c>lastBbMid?bull++:bear++; }
+  if(lastVwap!=null){ total++; last.c>lastVwap?bull++:bear++; }
+  if(lastStDir!=null){ total++; lastStDir===1?bull++:bear++; }
+
+  if(total===0) return { label:'தரவு போதாது', score:0, cls:'neu' };
+  const score = (bull-bear)/total;
+  let label, cls;
+  if(score>=0.6){ label='STRONG BUY'; cls='strongbuy'; }
+  else if(score>=0.2){ label='BUY'; cls='buy'; }
+  else if(score>-0.2){ label='NEUTRAL'; cls='neu'; }
+  else if(score>-0.6){ label='SELL'; cls='sell'; }
+  else { label='STRONG SELL'; cls='strongsell'; }
+
+  // ATR-based Target/Stop-Loss guide (1:2 risk-reward in the signal's direction) — a technical guide, not a live trade
+  let target=null, sl=null;
+  if(lastAtr!=null && score>=0.2){ target = last.c + lastAtr*2; sl = last.c - lastAtr*1; }
+  else if(lastAtr!=null && score<=-0.2){ target = last.c - lastAtr*2; sl = last.c + lastAtr*1; }
+
+  return { label, score, cls, bull, bear, total, target, sl };
+}
+function recoBadgeHtml(reco){
+  return `<span class="recoBadge ${reco.cls}" title="${reco.bull||0} bullish / ${reco.bear||0} bearish signals">${reco.label}</span>`;
+}
+function recoLevelsHtml(reco, ctx){
+  if(reco.target==null || reco.sl==null) return '';
+  if(ctx){
+    return `<span class="tgt recoClick" onclick="event.stopPropagation();openOrderModal('${ctx.symbol}','${ctx.token}','${ctx.exch}',null,${reco.target})" title="இந்த விலையை ஆர்டரில் பதிவு செய்ய கிளிக் பண்ணுங்க">🎯${reco.target.toFixed(2)}</span> <span class="sl recoClick" onclick="event.stopPropagation();openOrderModal('${ctx.symbol}','${ctx.token}','${ctx.exch}',null,${reco.sl})" title="இந்த விலையை ஆர்டரில் பதிவு செய்ய கிளிக் பண்ணுங்க">🛑${reco.sl.toFixed(2)}</span>`;
+  }
+  return `<span class="tgt">🎯${reco.target.toFixed(2)}</span> <span class="sl">🛑${reco.sl.toFixed(2)}</span>`;
+}
+let __recoBusy = false;
+let __recoQueued = false;
+async function refreshWatchlistRecommendations(){
+  if(__recoBusy){ __recoQueued = true; return; } // a run is already in progress — queue a follow-up instead of dropping this request
+  if(!(App.mode==='live' && App.session)) return;
+  const list = activeList();
+  if(!list || list.stocks.length===0) return;
+  __recoBusy = true; __recoQueued = false;
+  try{
+    for(const w of [...list.stocks]){
+      // bail out early if the user switched watchlists mid-loop
+      if(activeList().id !== list.id) break;
+      const cell = document.querySelector(`#watchlistBody tr[data-token="${w.token}"] .signal`);
+      if(!cell) continue;
+      try{
+        const candles = await fetchCandles(w.exch, w.token, 'FIFTEEN_MINUTE');
+        const reco = computeRecommendation(candles);
+        const html = recoBadgeHtml(reco) + (reco.target!=null ? `<div class="recoLevels">${recoLevelsHtml(reco, {symbol:w.symbol, token:w.token, exch:w.exch})}</div>` : '');
+        App.recoCache[w.token] = html;
+        cell.innerHTML = html;
+      }catch(e){
+        // transient fetch error — keep showing the last known good recommendation instead of blanking it
+        if(!App.recoCache[w.token]) cell.innerHTML = `<span class="recoBadge neu">—</span>`;
+      }
+      await new Promise(r=>setTimeout(r, 350)); // space out requests — respect Angel One rate limits
+    }
+  } finally {
+    __recoBusy = false;
+    if(__recoQueued){ __recoQueued = false; refreshWatchlistRecommendations(); } // a switch happened mid-run — refresh the (now-active) list right away
+  }
+}
+
+/* ---------------- Historical Candles + Indicators ---------------- */
+function fmtDate(d){
+  const p = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+async function fetchCandles(exch, token, interval){
+  await refreshSessionIfNeeded();
+  const to = new Date();
+  const from = new Date();
+  if(interval === 'ONE_DAY') from.setDate(from.getDate() - 200);
+  else if(interval === 'ONE_HOUR') from.setDate(from.getDate() - 20);
+  else if(interval === 'ONE_MINUTE') from.setDate(from.getDate() - 2);
+  else if(interval === 'FIVE_MINUTE') from.setDate(from.getDate() - 5);
+  else from.setDate(from.getDate() - 5);
+  const res = await fetch(BASE + '/rest/secure/angelbroking/historical/v1/getCandleData', {
+    method:'POST', headers: commonHeaders(),
+    body: JSON.stringify({ exchange: exch, symboltoken: token, interval, fromdate: fmtDate(from), todate: fmtDate(to) })
+  });
+  const data = await safeJson(res);
+  if(!data.status) throw new Error(data.message || 'Candle fetch failed');
+  return (data.data||[]).map(c => ({ t:new Date(c[0]).getTime(), o:c[1], h:c[2], l:c[3], c:c[4], v:c[5] }));
+}
+function sma(values, period){
+  const out = new Array(values.length).fill(null);
+  let sum = 0;
+  for(let i=0;i<values.length;i++){
+    sum += values[i];
+    if(i>=period) sum -= values[i-period];
+    if(i>=period-1) out[i] = sum/period;
+  }
+  return out;
+}
+function ema(values, period){
+  const out = new Array(values.length).fill(null);
+  const k = 2/(period+1);
+  let prev;
+  for(let i=0;i<values.length;i++){
+    if(i===period-1){ prev = values.slice(0,period).reduce((a,b)=>a+b,0)/period; out[i]=prev; }
+    else if(i>=period){ prev = values[i]*k + prev*(1-k); out[i]=prev; }
+  }
+  return out;
+}
+function rsi(values, period){
+  const out = new Array(values.length).fill(null);
+  let gains=0, losses=0;
+  for(let i=1;i<values.length;i++){
+    const diff = values[i]-values[i-1];
+    const gain = diff>0?diff:0, loss = diff<0?-diff:0;
+    if(i<=period){ gains+=gain; losses+=loss; if(i===period){ const rs = losses===0?100:gains/losses; out[i]=100-100/(1+rs); } }
+    else{
+      gains = (gains*(period-1)+gain)/period;
+      losses = (losses*(period-1)+loss)/period;
+      const rs = losses===0?100:gains/losses;
+      out[i] = 100 - 100/(1+rs);
+    }
+  }
+  return out;
+}
+function macd(values){
+  const ema12 = ema(values,12), ema26 = ema(values,26);
+  const macdLine = values.map((_,i)=> (ema12[i]!=null && ema26[i]!=null) ? ema12[i]-ema26[i] : null);
+  const validMacd = macdLine.filter(v=>v!=null);
+  const signalRaw = ema(validMacd,9);
+  const signalLine = new Array(values.length).fill(null);
+  let si=0;
+  for(let i=0;i<macdLine.length;i++){ if(macdLine[i]!=null){ signalLine[i]=signalRaw[si]; si++; } }
+  const hist = values.map((_,i)=> (macdLine[i]!=null && signalLine[i]!=null) ? macdLine[i]-signalLine[i] : null);
+  return { macdLine, signalLine, hist };
+}
+function vwap(candles){
+  const out = new Array(candles.length).fill(null);
+  let cumPV=0, cumV=0, lastDay=null;
+  candles.forEach((c,i)=>{
+    const day = new Date(c.t).toDateString();
+    if(day!==lastDay){ cumPV=0; cumV=0; lastDay=day; }
+    const typical = (c.h+c.l+c.c)/3;
+    cumPV += typical*c.v; cumV += c.v;
+    out[i] = cumV ? cumPV/cumV : null;
+  });
+  return out;
+}
+
+function bollinger(values, period, mult){
+  period = period||20; mult = mult||2;
+  const mid = sma(values, period);
+  const upper = new Array(values.length).fill(null), lower = new Array(values.length).fill(null);
+  for(let i=0;i<values.length;i++){
+    if(mid[i]==null) continue;
+    const slice = values.slice(i-period+1, i+1);
+    const mean = mid[i];
+    const variance = slice.reduce((a,v)=>a+(v-mean)*(v-mean),0)/slice.length;
+    const sd = Math.sqrt(variance);
+    upper[i] = mean + mult*sd; lower[i] = mean - mult*sd;
+  }
+  return { mid, upper, lower };
+}
+function atr(candles, period){
+  period = period||14;
+  const trs = candles.map((c,i)=>{
+    if(i===0) return c.h-c.l;
+    const prevClose = candles[i-1].c;
+    return Math.max(c.h-c.l, Math.abs(c.h-prevClose), Math.abs(c.l-prevClose));
+  });
+  const out = new Array(candles.length).fill(null);
+  let sum=0;
+  for(let i=0;i<trs.length;i++){
+    if(i<period-1){ sum+=trs[i]; continue; }
+    if(i===period-1){ sum+=trs[i]; out[i]=sum/period; continue; }
+    out[i] = (out[i-1]*(period-1) + trs[i])/period;
+  }
+  return out;
+}
+function superTrend(candles, period, mult){
+  period = period||10; mult = mult||3;
+  const atrVals = atr(candles, period);
+  const out = new Array(candles.length).fill(null);
+  const dir = new Array(candles.length).fill(1);
+  let upperBand=null, lowerBand=null;
+  for(let i=0;i<candles.length;i++){
+    if(atrVals[i]==null){ continue; }
+    const hl2 = (candles[i].h+candles[i].l)/2;
+    let basicUpper = hl2 + mult*atrVals[i];
+    let basicLower = hl2 - mult*atrVals[i];
+    if(upperBand==null){ upperBand=basicUpper; lowerBand=basicLower; }
+    else{
+      upperBand = (basicUpper < upperBand || candles[i-1].c > upperBand) ? basicUpper : upperBand;
+      lowerBand = (basicLower > lowerBand || candles[i-1].c < lowerBand) ? basicLower : lowerBand;
+    }
+    const prevDir = i>0 ? dir[i-1] : 1;
+    if(candles[i].c > upperBand) dir[i]=1;
+    else if(candles[i].c < lowerBand) dir[i]=-1;
+    else dir[i]=prevDir;
+    out[i] = dir[i]===1 ? lowerBand : upperBand;
+  }
+  return { line: out, dir };
+}
+
+function saveDrawings(){ lsSet('chartDrawings', App.chart.drawings); }
+function getMyDrawings(){
+  const key = App.chart.token || '_';
+  if(!App.chart.drawings[key]) App.chart.drawings[key] = [];
+  return App.chart.drawings[key];
+}
+function setChartTool(tool){
+  App.chart.drawTool = (App.chart.drawTool===tool) ? null : tool;
+  App.chart.pendingDraw = null;
+  ['toolHLine','toolTrend','toolFib'].forEach(id=>{
+    const map = { toolHLine:'hline', toolTrend:'trend', toolFib:'fib' };
+    document.getElementById(id).classList.toggle('active', App.chart.drawTool===map[id]);
+  });
+  const priceCv = document.getElementById('priceCanvas');
+  if(priceCv) priceCv.style.cursor = App.chart.drawTool ? 'crosshair' : 'pointer';
+}
+function resetChartView(){
+  const N = App.chart.candles.length;
+  const count = Math.min(N, 120);
+  App.chart.view = { start: Math.max(0, N-count), count };
+  App.chart.priceShift = 0;
+  renderChartCanvas();
+}
+function initChartCanvasClicks(){
+  const priceCv = document.getElementById('priceCanvas');
+  if(!priceCv || priceCv.dataset.clickBound) return;
+  priceCv.dataset.clickBound = '1';
+  priceCv.style.cursor = 'pointer';
+  priceCv.style.touchAction = 'none';
+  let isPanning = false, panStartX = 0, panStartY = 0, panStartView = 0, panStartPriceShift = 0;
+
+  function toCanvasXY(e){
+    const rect = priceCv.getBoundingClientRect();
+    const scaleX = priceCv.width / rect.width, scaleY = priceCv.height / rect.height;
+    return { x:(e.clientX-rect.left)*scaleX, y:(e.clientY-rect.top)*scaleY };
+  }
+  function toCanvasXYFromPoint(clientX, clientY){
+    const rect = priceCv.getBoundingClientRect();
+    const scaleX = priceCv.width / rect.width, scaleY = priceCv.height / rect.height;
+    return { x:(clientX-rect.left)*scaleX, y:(clientY-rect.top)*scaleY };
+  }
+  function zoomAtIndex(anchorIdx, factor){
+    if(!App.chart.geom || !App.chart.candles.length) return;
+    const N = App.chart.candles.length;
+    let count = Math.round(App.chart.view.count * factor);
+    count = Math.max(15, Math.min(N, count));
+    const ratio = (anchorIdx - App.chart.view.start) / App.chart.view.count;
+    let start = Math.round(anchorIdx - ratio*count);
+    start = Math.max(0, Math.min(N-count, start));
+    App.chart.view = { start, count };
+    renderChartCanvas();
+  }
+  window.__chartZoomAtCenter = function(factor){
+    if(!App.chart.geom) return;
+    const centerIdx = App.chart.view.start + App.chart.view.count/2;
+    zoomAtIndex(centerIdx, factor);
+  };
+
+  priceCv.addEventListener('click', (e)=>{
+    const {x,y} = toCanvasXY(e);
+    if(!App.chart.geom) return;
+    const g = App.chart.geom;
+    const price = g.priceFromY(y);
+    if(App.chart.drawTool==='hline'){
+      getMyDrawings().push({ type:'hline', price });
+      saveDrawings(); setChartTool('hline'); renderChartCanvas(); return;
+    }
+    if(App.chart.drawTool==='trend' || App.chart.drawTool==='fib'){
+      const idx = g.indexFromX(x);
+      if(!App.chart.pendingDraw){
+        App.chart.pendingDraw = { i1:idx, p1:price };
+      } else {
+        const d = App.chart.pendingDraw;
+        getMyDrawings().push({ type:App.chart.drawTool, i1:d.i1, p1:d.p1, i2:idx, p2:price });
+        saveDrawings(); App.chart.pendingDraw = null;
+      }
+      renderChartCanvas();
+    }
+  });
+
+  priceCv.addEventListener('mousedown', (e)=>{
+    if(App.chart.drawTool) return; // drawing uses click, not drag
+    isPanning = true; panStartX = e.clientX; panStartY = e.clientY;
+    panStartView = App.chart.view.start; panStartPriceShift = App.chart.priceShift || 0;
+  });
+  window.addEventListener('mouseup', ()=>{ isPanning=false; });
+  priceCv.addEventListener('mouseleave', ()=>{
+    isPanning = false;
+    document.getElementById('crosshairBar').classList.remove('show');
+    App.chart._crossX = null;
+    if(App.chart.candles.length) renderChartCanvas();
+  });
+
+  priceCv.addEventListener('mousemove', (e)=>{
+    const {x,y} = toCanvasXY(e);
+    if(isPanning && App.chart.geom){
+      const rect = priceCv.getBoundingClientRect();
+      const scaleX = priceCv.width/rect.width, scaleY = priceCv.height/rect.height;
+      const dx = (e.clientX - panStartX)*scaleX;
+      const dy = (e.clientY - panStartY)*scaleY;
+      const candleW = App.chart.geom.candleW || 6;
+      const shift = Math.round(-dx/candleW);
+      const N = App.chart.candles.length;
+      let start = panStartView + shift;
+      start = Math.max(0, Math.min(N-App.chart.view.count, start));
+      App.chart.view.start = start;
+      const priceRange = App.chart.geom.maxP - App.chart.geom.minP;
+      App.chart.priceShift = panStartPriceShift - (dy/App.chart.geom.plotH)*priceRange;
+      renderChartCanvas();
+      return;
+    }
+    App.chart._crossX = x; App.chart._crossY = y;
+    if(App.chart.crosshairOn) renderChartCanvas(); else updateHoverCursor(x);
+  });
+
+  priceCv.addEventListener('wheel', (e)=>{
+    if(!App.chart.geom || !App.chart.candles.length) return;
+    e.preventDefault();
+    const {x} = toCanvasXY(e);
+    const anchorIdx = App.chart.geom.indexFromX(x);
+    const factor = e.deltaY > 0 ? 1.15 : 0.87;
+    zoomAtIndex(anchorIdx, factor);
+  }, { passive:false });
+
+  priceCv.addEventListener('dblclick', ()=> resetChartView());
+
+  // ---- touch support: 1-finger pan, 2-finger pinch-zoom — kept fully inside the canvas so the page itself never scrolls/moves ----
+  let touchMode = null; // 'pan' | 'pinch'
+  let touchPanStartX = 0, touchPanStartY = 0, touchPanStartView = 0, touchPanStartPriceShift = 0;
+  let pinchStartDist = 0, pinchStartCount = 0, pinchAnchorIdx = 0;
+  function touchDist(t0, t1){ return Math.hypot(t1.clientX-t0.clientX, t1.clientY-t0.clientY); }
+  priceCv.addEventListener('touchstart', (e)=>{
+    if(!App.chart.geom) return;
+    e.preventDefault();
+    if(e.touches.length === 1){
+      touchMode = 'pan';
+      touchPanStartX = e.touches[0].clientX; touchPanStartY = e.touches[0].clientY;
+      touchPanStartView = App.chart.view.start; touchPanStartPriceShift = App.chart.priceShift || 0;
+      const {x,y} = toCanvasXYFromPoint(e.touches[0].clientX, e.touches[0].clientY);
+      App.chart._crossX = x; App.chart._crossY = y;
+    } else if(e.touches.length === 2){
+      touchMode = 'pinch';
+      pinchStartDist = touchDist(e.touches[0], e.touches[1]);
+      pinchStartCount = App.chart.view.count;
+      const midX = (e.touches[0].clientX + e.touches[1].clientX)/2;
+      const {x} = toCanvasXYFromPoint(midX, 0);
+      pinchAnchorIdx = App.chart.geom.indexFromX(x);
+    }
+  }, { passive:false });
+  priceCv.addEventListener('touchmove', (e)=>{
+    if(!App.chart.geom) return;
+    e.preventDefault();
+    if(touchMode === 'pan' && e.touches.length === 1){
+      const dx = e.touches[0].clientX - touchPanStartX;
+      const dy = e.touches[0].clientY - touchPanStartY;
+      const candleW = App.chart.geom.candleW || 6;
+      const shift = Math.round(-dx/candleW);
+      const N = App.chart.candles.length;
+      let start = touchPanStartView + shift;
+      start = Math.max(0, Math.min(N-App.chart.view.count, start));
+      App.chart.view.start = start;
+      const priceRange = App.chart.geom.maxP - App.chart.geom.minP;
+      App.chart.priceShift = touchPanStartPriceShift - (dy/App.chart.geom.plotH)*priceRange;
+      renderChartCanvas();
+    } else if(touchMode === 'pinch' && e.touches.length === 2){
+      const dist = touchDist(e.touches[0], e.touches[1]);
+      if(pinchStartDist > 0){
+        const factor = pinchStartDist / Math.max(dist,1); // fingers apart → zoom in (smaller count)
+        const N = App.chart.candles.length;
+        let count = Math.round(pinchStartCount * factor);
+        count = Math.max(15, Math.min(N, count));
+        const ratio = (pinchAnchorIdx - App.chart.view.start) / App.chart.view.count;
+        let start = Math.round(pinchAnchorIdx - ratio*count);
+        start = Math.max(0, Math.min(N-count, start));
+        App.chart.view = { start, count };
+        renderChartCanvas();
+      }
+    }
+  }, { passive:false });
+  priceCv.addEventListener('touchend', (e)=>{
+    if(e.touches.length === 0) touchMode = null;
+    else if(e.touches.length === 1){
+      touchMode = 'pan'; touchPanStartX = e.touches[0].clientX; touchPanStartY = e.touches[0].clientY;
+      touchPanStartView = App.chart.view.start; touchPanStartPriceShift = App.chart.priceShift || 0;
+    }
+  });
+}
+function updateHoverCursor(x){
+  // lightweight readout update without a full redraw, used when crosshair overlay is off
+}
+async function loadChartForToken(token, exch, symbol){
+  App.chart.token = token; App.chart.exch = exch; App.chart.symbol = symbol; App.chart.livePos = null;
+  App.chart.pendingDraw = null;
+  App.chart.priceShift = 0;
+  document.getElementById('chartTitle').textContent = 'சார்ட் — ' + symbol.replace('-EQ','');
+  const buyBtn = document.getElementById('btnChartBuy'), sellBtn = document.getElementById('btnChartSell');
+  buyBtn.style.display = ''; sellBtn.style.display = '';
+  buyBtn.onclick = ()=> openOrderModal(symbol, token, exch, 'BUY');
+  sellBtn.onclick = ()=> openOrderModal(symbol, token, exch, 'SELL');
+  switchTab('chart');
+  renderChartOrdersList();
+  await drawChart();
+}
+window.openInChart = function(token, exch, symbol){ loadChartForToken(token, exch, symbol); };
+function copyStockSymbol(symbol){
+  const clean = symbol.replace('-EQ','');
+  const done = () => toast('📋 "' + clean + '" காப்பி ஆனது — Angel platform-ல் paste பண்ணலாம்', 'ok');
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(clean).then(done).catch(()=>{
+      fallbackCopy(clean); done();
+    });
+  } else {
+    fallbackCopy(clean); done();
+  }
+}
+function fallbackCopy(text){
+  const ta = document.createElement('textarea');
+  ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  try{ document.execCommand('copy'); }catch(e){ /* ignore */ }
+  document.body.removeChild(ta);
+}
+function orderBtnsHtml(symbol, token, exch){
+  return `<button class="ordMiniBtn buy" onclick="event.stopPropagation();openOrderModal('${symbol}','${token}','${exch}','BUY')" title="Buy ஆர்டர்">B</button>` +
+         `<button class="ordMiniBtn sell" onclick="event.stopPropagation();openOrderModal('${symbol}','${token}','${exch}','SELL')" title="Sell ஆர்டர்">S</button>`;
+}
+
+/* ---------------- Order Modal (Buy/Sell — Paper & Live, usable everywhere a stock name appears) ---------------- */
+window.openOrderModal = function(symbol, token, exch, side, price){
+  App.orderCtx = { symbol, token, exch };
+  document.getElementById('orderModalTitle').textContent = 'ஆர்டர் — ' + symbol.replace('-EQ','');
+  const q = App.quoteCache[token];
+  document.getElementById('orderModalLtpLine').textContent = q && q.ltp!=null ? ('LTP: ₹' + q.ltp.toFixed(2)) : 'LTP: —';
+  document.querySelectorAll('#orderSideRow input').forEach(r => r.checked = (r.value === (side||'BUY')));
+  const defaultMode = (App.mode==='live' && App.session) ? 'live' : 'paper';
+  document.querySelectorAll('#orderModeRow input').forEach(r => r.checked = (r.value === defaultMode));
+  document.getElementById('orderQty').value = 1;
+  document.getElementById('orderType').value = 'MARKET';
+  document.getElementById('orderPrice').value = price!=null ? price.toFixed(2) : (q && q.ltp!=null ? q.ltp.toFixed(2) : '');
+  document.getElementById('orderPriceHint').textContent = price!=null ? '(பரிந்துரை விலை தானாக பதிவானது)' : '';
+  document.getElementById('orderUseSlTgt').checked = false;
+  document.getElementById('orderSlTgtRow').style.display = 'none';
+  document.getElementById('orderTarget').value = ''; document.getElementById('orderSl').value = '';
+  document.getElementById('orderModalMsg').style.display = 'none';
+  updateOrderModalFieldsVisibility();
+  updateOrderAffordHint();
+  document.getElementById('orderModalOverlay').classList.add('show');
+};
+function closeOrderModal(){ document.getElementById('orderModalOverlay').classList.remove('show'); }
+function updateOrderModalFieldsVisibility(){
+  const mode = document.querySelector('#orderModeRow input:checked').value;
+  document.getElementById('orderProductField').style.display = mode==='live' ? '' : 'none';
+  const otype = document.getElementById('orderType').value;
+  document.getElementById('orderPrice').disabled = (otype==='MARKET');
+  updateOrderAffordHint();
+}
+function updateOrderAffordHint(){
+  const ctx = App.orderCtx; if(!ctx) return;
+  const el = document.getElementById('orderAffordHint');
+  const mode = document.querySelector('#orderModeRow input:checked').value;
+  const otype = document.getElementById('orderType').value;
+  const q = App.quoteCache[ctx.token];
+  const priceInput = parseFloat(document.getElementById('orderPrice').value);
+  const refPrice = otype==='MARKET' ? (q && q.ltp!=null ? q.ltp : priceInput) : priceInput;
+  if(mode !== 'paper' || !refPrice || refPrice<=0){ el.textContent = ''; return; }
+  const maxQty = Math.floor(App.paperCash / refPrice);
+  el.textContent = `💰 கையிருப்பு ₹${App.paperCash.toFixed(0)} — இந்த விலையில் அதிகபட்சம் ${maxQty>=0?maxQty:0} பங்கு வாங்கலாம்`;
+}
+function showOrderModalMsg(msg, type){
+  const el = document.getElementById('orderModalMsg');
+  el.textContent = msg; el.className = 'loginMsg ' + (type==='err'?'error':'info');
+  el.style.display = 'block';
+}
+async function submitOrderFromModal(){
+  const ctx = App.orderCtx; if(!ctx) return;
+  const side = document.querySelector('#orderSideRow input:checked').value;
+  const mode = document.querySelector('#orderModeRow input:checked').value;
+  const qty = parseInt(document.getElementById('orderQty').value, 10);
+  const otype = document.getElementById('orderType').value;
+  const priceInput = parseFloat(document.getElementById('orderPrice').value);
+  const q = App.quoteCache[ctx.token];
+  const refPrice = otype==='MARKET' ? (q && q.ltp!=null ? q.ltp : priceInput) : priceInput;
+  if(!qty || qty<=0){ showOrderModalMsg('சரியான Qty கொடுங்க','err'); return; }
+  if(otype==='LIMIT' && (!priceInput || priceInput<=0)){ showOrderModalMsg('சரியான விலை கொடுங்க','err'); return; }
+  const useSlTgt = document.getElementById('orderUseSlTgt').checked;
+  const target = useSlTgt ? parseFloat(document.getElementById('orderTarget').value) : null;
+  const sl = useSlTgt ? parseFloat(document.getElementById('orderSl').value) : null;
+  const btn = document.getElementById('btnOrderSubmit');
+  btn.disabled = true; btn.textContent = 'சமர்ப்பிக்கிறது...';
+  try{
+    if(mode === 'paper'){
+      placePaperOrder({ symbol:ctx.symbol, token:ctx.token, exch:ctx.exch, side, qty, price:refPrice,
+        target: (target && target>0) ? target : null, sl: (sl && sl>0) ? sl : null });
+      toast('🧪 பேப்பர் ஆர்டர் வைக்கப்பட்டது: ' + side + ' ' + qty + ' × ' + ctx.symbol.replace('-EQ',''), 'ok');
+      closeOrderModal();
+    } else {
+      if(!(App.mode==='live' && App.session)){ showOrderModalMsg('லைவ் ஆர்டர் வைக்க Angel One-ல் login பண்ணணும்','err'); btn.disabled=false; btn.textContent='ஆர்டர் சமர்ப்பி'; return; }
+      const productType = document.getElementById('orderProductType').value;
+      await placeLiveOrderApi({ symbol:ctx.symbol, token:ctx.token, exch:ctx.exch, side, qty, otype, price:priceInput, productType });
+      toast('🔴 லைவ் ஆர்டர் அனுப்பப்பட்டது: ' + side + ' ' + qty + ' × ' + ctx.symbol.replace('-EQ',''), 'ok');
+      closeOrderModal();
+      renderOrderbook();
+    }
+    renderChartOrdersList(); renderPortfolio();
+  }catch(e){
+    showOrderModalMsg('ஆர்டர் தோல்வி: ' + e.message, 'err');
+  } finally {
+    btn.disabled = false; btn.textContent = 'ஆர்டர் சமர்ப்பி';
+  }
+}
+function placePaperOrder({symbol, token, exch, side, qty, price, target, sl}){
+  const cost = qty * price;
+  if(side === 'BUY'){
+    App.paperCash -= cost;
+    const existing = App.paperHoldings.find(h => h.token === token);
+    if(existing){
+      const totalQty = existing.qty + qty;
+      existing.avg = ((existing.avg*existing.qty) + cost) / totalQty;
+      existing.qty = totalQty;
+      if(target) existing.target = target;
+      if(sl) existing.sl = sl;
+    } else {
+      App.paperHoldings.push({ symbol, token, exch, qty, avg:price, target: target||null, sl: sl||null });
+    }
+  } else {
+    App.paperCash += cost;
+    const existing = App.paperHoldings.find(h => h.token === token);
+    if(existing){
+      existing.qty -= qty;
+      if(existing.qty <= 0) App.paperHoldings = App.paperHoldings.filter(h => h.token !== token);
+    }
+  }
+  App.paperOrders.unshift({ time: Date.now(), symbol, token, exch, side, qty, price });
+  persist();
+  renderWatchlistTable();
+}
+function checkPaperTargetSl(){
+  if(!App.paperHoldings.length) return;
+  [...App.paperHoldings].forEach(h => {
+    if(!h.target && !h.sl) return;
+    const q = App.quoteCache[h.token]; if(!q || q.ltp==null) return;
+    if(h.target && q.ltp >= h.target){
+      placePaperOrder({ symbol:h.symbol, token:h.token, exch:h.exch, side:'SELL', qty:h.qty, price:h.target });
+      addJournalEntry(`🎯 AUTO TARGET HIT — ${h.symbol.replace('-EQ','')} ₹${h.target.toFixed(2)}-க்கு விற்கப்பட்டது`);
+      toast('🎯 டார்கெட் தொட்டது — ' + h.symbol.replace('-EQ','') + ' auto-sell ஆனது', 'ok');
+      renderPortfolio(); renderOrderbook(); renderChartOrdersList();
+    } else if(h.sl && q.ltp <= h.sl){
+      placePaperOrder({ symbol:h.symbol, token:h.token, exch:h.exch, side:'SELL', qty:h.qty, price:h.sl });
+      addJournalEntry(`🛑 AUTO STOP-LOSS HIT — ${h.symbol.replace('-EQ','')} ₹${h.sl.toFixed(2)}-க்கு விற்கப்பட்டது`);
+      toast('🛑 ஸ்டாப்-லாஸ் தொட்டது — ' + h.symbol.replace('-EQ','') + ' auto-sell ஆனது', 'ok');
+      renderPortfolio(); renderOrderbook(); renderChartOrdersList();
+    }
+  });
+}
+async function placeLiveOrderApi({symbol, token, exch, side, qty, otype, price, productType}){
+  await refreshSessionIfNeeded();
+  await fetchPublicIP(); // refresh right before the order — a stale IP (cached at login) is the #1 cause of "not a registered IP"
+  const body = {
+    variety: 'NORMAL',
+    tradingsymbol: symbol,
+    symboltoken: token,
+    transactiontype: side,
+    exchange: exch,
+    ordertype: otype,
+    producttype: productType,
+    duration: 'DAY',
+    price: otype==='LIMIT' ? String(price) : '0',
+    squareoff: '0', stoploss: '0',
+    quantity: String(qty)
+  };
+  const res = await fetch(BASE + '/rest/secure/angelbroking/order/v1/placeOrder', {
+    method:'POST', headers: commonHeaders(), body: JSON.stringify(body)
+  });
+  const data = await safeJson(res);
+  if(!data.status) throw new Error(data.message || 'Order placement தோல்வி');
+  return data.data;
+}
+function initOrderModal(){
+  document.getElementById('btnOrderModalClose').addEventListener('click', closeOrderModal);
+  document.getElementById('btnOrderCancel').addEventListener('click', closeOrderModal);
+  document.getElementById('orderModalOverlay').addEventListener('click', (e)=>{ if(e.target.id==='orderModalOverlay') closeOrderModal(); });
+  document.getElementById('btnOrderSubmit').addEventListener('click', submitOrderFromModal);
+  document.getElementById('orderType').addEventListener('change', updateOrderModalFieldsVisibility);
+  document.querySelectorAll('#orderModeRow input').forEach(r => r.addEventListener('change', updateOrderModalFieldsVisibility));
+  document.getElementById('orderQty').addEventListener('input', updateOrderAffordHint);
+  document.getElementById('orderPrice').addEventListener('input', updateOrderAffordHint);
+  document.getElementById('orderUseSlTgt').addEventListener('change', (e)=>{
+    document.getElementById('orderSlTgtRow').style.display = e.target.checked ? 'flex' : 'none';
+  });
+  setInterval(checkPaperTargetSl, 20000);
+}
+
+async function drawChart(){
+  if(!App.chart.token){ return; }
+  if(!(App.mode==='live' && App.session)){ toast('சார்ட் பார்க்க Angel One-ல் login பண்ணணும்', 'err'); return; }
+  try{
+    const candles = await fetchCandles(App.chart.exch, App.chart.token, App.chart.interval);
+    App.chart.candles = candles;
+    resetChartView();
+    renderChartOrdersList();
+    refreshMarketDepth();
+  }catch(e){ toast('சார்ட் ஏற்ற முடியல: '+e.message, 'err'); }
+}
+function initDepthDrag(){
+  const panel = document.getElementById('marketDepthPanel');
+  const handle = document.getElementById('depthDragHandle');
+  const dockBtn = document.getElementById('btnDepthDock');
+  if(!panel || !handle) return;
+  const savedPos = lsGet('depthPanelPos', null);
+  if(savedPos){ floatDepthPanel(savedPos.left, savedPos.top); }
+  function floatDepthPanel(left, top){
+    panel.classList.add('depthFloating');
+    panel.style.left = left+'px';
+    panel.style.top = top+'px';
+    dockBtn.style.display = '';
+  }
+  function dockDepthPanel(){
+    panel.classList.remove('depthFloating');
+    panel.style.left = ''; panel.style.top = '';
+    dockBtn.style.display = 'none';
+    lsSet('depthPanelPos', null);
+  }
+  dockBtn.addEventListener('click', dockDepthPanel);
+  let dragging = false, offX = 0, offY = 0;
+  function startDrag(clientX, clientY){
+    dragging = true;
+    const rect = panel.getBoundingClientRect();
+    if(!panel.classList.contains('depthFloating')){
+      floatDepthPanel(rect.left, rect.top);
+    }
+    const r2 = panel.getBoundingClientRect();
+    offX = clientX - r2.left; offY = clientY - r2.top;
+  }
+  function moveDrag(clientX, clientY){
+    if(!dragging) return;
+    let left = clientX - offX, top = clientY - offY;
+    left = Math.max(0, Math.min(window.innerWidth - panel.offsetWidth, left));
+    top = Math.max(0, Math.min(window.innerHeight - 40, top));
+    panel.style.left = left+'px'; panel.style.top = top+'px';
+  }
+  function endDrag(){
+    if(!dragging) return;
+    dragging = false;
+    lsSet('depthPanelPos', { left: parseInt(panel.style.left,10), top: parseInt(panel.style.top,10) });
+  }
+  handle.addEventListener('mousedown', (e)=>{ if(e.target===dockBtn) return; startDrag(e.clientX, e.clientY); e.preventDefault(); });
+  window.addEventListener('mousemove', (e)=> moveDrag(e.clientX, e.clientY));
+  window.addEventListener('mouseup', endDrag);
+  handle.addEventListener('touchstart', (e)=>{ if(e.target===dockBtn) return; const t=e.touches[0]; startDrag(t.clientX, t.clientY); }, {passive:true});
+  window.addEventListener('touchmove', (e)=>{ if(!dragging) return; const t=e.touches[0]; moveDrag(t.clientX, t.clientY); }, {passive:true});
+  window.addEventListener('touchend', endDrag);
+}
+async function refreshMarketDepth(){
+  const bidBody = document.getElementById('depthBidBody'), askBody = document.getElementById('depthAskBody');
+  if(!App.chart.token){ return; }
+  if(!(App.mode==='live' && App.session)){
+    bidBody.innerHTML = '<tr><td colspan="2" class="emptyState">Live login தேவை</td></tr>';
+    askBody.innerHTML = '';
+    return;
+  }
+  try{
+    const map = {}; map[App.chart.exch] = [App.chart.token];
+    const fetched = await getQuotes(map, 'FULL');
+    const q = fetched[0];
+    if(!q){ return; }
+    const chg = q.netChange!=null ? q.netChange : (q.ltp - q.close);
+    const chgp = q.percentChange!=null ? q.percentChange : (q.close ? (chg/q.close*100) : 0);
+    const setStat = (id, val, cls) => { const el = document.getElementById(id); if(el) el.innerHTML = val!=null ? `<span class="${cls||''}">${val}</span>` : '—'; };
+    setStat('depthLTP', q.ltp!=null ? q.ltp.toFixed(2) : null);
+    setStat('depthChg', q.ltp!=null ? (chg>=0?'+':'')+chg.toFixed(2) : null, chg>=0?'upv':'downv');
+    setStat('depthChgp', q.ltp!=null ? (chg>=0?'+':'')+chgp.toFixed(2)+'%' : null, chg>=0?'upv':'downv');
+    setStat('depthUpper', q.upperCircuit!=null ? q.upperCircuit.toFixed(2) : null, 'vGreen');
+    setStat('depthLower', q.lowerCircuit!=null ? q.lowerCircuit.toFixed(2) : null, 'vRed');
+    setStat('depth52H', q['52WeekHigh']!=null ? q['52WeekHigh'].toFixed(2) : null, 'vGreen');
+    setStat('depth52L', q['52WeekLow']!=null ? q['52WeekLow'].toFixed(2) : null, 'vRed');
+    if(!q.depth){ return; }
+    const buy = (q.depth.buy||[]).slice(0,5), sell = (q.depth.sell||[]).slice(0,5);
+    bidBody.innerHTML = buy.length ? buy.map(b=>`<tr><td>${(b.quantity||0).toLocaleString('en-IN')}</td><td>${b.price.toFixed(2)}</td></tr>`).join('')
+      : '<tr><td colspan="2" class="emptyState">—</td></tr>';
+    askBody.innerHTML = sell.length ? sell.map(a=>`<tr><td>${a.price.toFixed(2)}</td><td>${(a.quantity||0).toLocaleString('en-IN')}</td></tr>`).join('')
+      : '<tr><td colspan="2" class="emptyState">—</td></tr>';
+  }catch(e){ /* silent — retry on next cycle */ }
+}
+function haCandles(candles){
+  const out = [];
+  for(let i=0;i<candles.length;i++){
+    const c = candles[i];
+    const haClose = (c.o+c.h+c.l+c.c)/4;
+    const haOpen = i===0 ? (c.o+c.c)/2 : (out[i-1].o + out[i-1].c)/2;
+    const haHigh = Math.max(c.h, haOpen, haClose);
+    const haLow = Math.min(c.l, haOpen, haClose);
+    out.push({ o:haOpen, h:haHigh, l:haLow, c:haClose, v:c.v, t:c.t });
+  }
+  return out;
+}
+function renderChartCanvas(){
+  initChartCanvasClicks();
+  const candles = App.chart.candles;
+  if(!candles || candles.length===0) return;
+  const N = candles.length;
+  if(!App.chart.view.count) App.chart.view = { start: Math.max(0,N-120), count: Math.min(N,120) };
+  let { start:vStart, count:vCount } = App.chart.view;
+  vCount = Math.max(15, Math.min(N, vCount)); vStart = Math.max(0, Math.min(N-vCount, vStart));
+  App.chart.view = { start:vStart, count:vCount };
+  const visIdx = []; for(let i=vStart;i<vStart+vCount;i++) visIdx.push(i);
+
+  const closes = candles.map(c=>c.c);
+  const smaVals = sma(closes,20);
+  const emaVals = ema(closes,50);
+  const vwapVals = vwap(candles);
+  const rsiVals = rsi(closes,14);
+  const macdVals = macd(closes);
+  const bbVals = bollinger(closes,20,2);
+  const atrVals = atr(candles,14);
+  const stVals = superTrend(candles,10,3);
+  const displayCandles = App.chart.candleType==='heikinashi' ? haCandles(candles) : candles;
+
+  const last = candles[candles.length-1];
+  document.getElementById('chartLTP').textContent = last.c.toFixed(2);
+  const lastRsi = [...rsiVals].reverse().find(v=>v!=null);
+  document.getElementById('chartRSI').textContent = lastRsi ? lastRsi.toFixed(1) : '—';
+  const lastMacdHist = [...macdVals.hist].reverse().find(v=>v!=null);
+  document.getElementById('chartMACD').textContent = lastMacdHist!=null ? lastMacdHist.toFixed(2) : '—';
+  const lastVwap = [...vwapVals].reverse().find(v=>v!=null);
+  document.getElementById('chartVWAP').textContent = lastVwap ? lastVwap.toFixed(2) : '—';
+  const reco = computeRecommendation(candles);
+  document.getElementById('chartReco').innerHTML = recoBadgeHtml(reco);
+  document.getElementById('chartRecoLevels').innerHTML = reco.target!=null ? recoLevelsHtml(reco, {symbol:App.chart.symbol, token:App.chart.token, exch:App.chart.exch}) : '<span style="color:var(--muted);">Target/SL — தெளிவான signal இல்ல (Neutral)</span>';
+
+  const priceCv = document.getElementById('priceCanvas');
+  const ctx = priceCv.getContext('2d');
+  const W = priceCv.clientWidth || 800, H = priceCv.clientHeight || 360;
+  priceCv.width = W; priceCv.height = H;
+  ctx.clearRect(0,0,W,H);
+
+  const padL=50, padR=68, padT=10, padB=28;
+  const plotW = W-padL-padR, plotH = H-padT-padB;
+  const candleW = plotW/vCount;
+
+  let minP = Math.min(...visIdx.map(i=>displayCandles[i].l)), maxP = Math.max(...visIdx.map(i=>displayCandles[i].h));
+  const padPrice = (maxP-minP)*0.08 || 1;
+  minP -= padPrice; maxP += padPrice;
+  const priceShift = App.chart.priceShift || 0;
+  minP -= priceShift; maxP -= priceShift;
+  const yOf = p => padT + (1-(p-minP)/(maxP-minP))*plotH;
+  const xOf = i => padL + (i-vStart)*candleW + candleW/2;
+  const indexFromX = x => Math.round(vStart + (x-padL)/candleW - 0.5);
+  const priceFromY = y => minP + (1-(y-padT)/plotH)*(maxP-minP);
+  App.chart.geom = { padL, padR, padT, padB, W, H, candleW, minP, maxP, plotW, plotH, vStart, vCount, xOf, yOf, indexFromX, priceFromY };
+
+  // grid + labels (left = grid scale, right = live reference tags drawn later)
+  // pick a "nice" price step so gridlines land on round numbers — shows every ₹1 (or finer) once zoomed in enough
+  function niceStep(range, targetCount){
+    const rough = range / targetCount;
+    const mag = Math.pow(10, Math.floor(Math.log10(rough || 1)));
+    const norm = rough / mag;
+    let step; if(norm < 1.5) step = 1; else if(norm < 3) step = 2; else if(norm < 7) step = 5; else step = 10;
+    return step * mag;
+  }
+  const priceStep = niceStep(maxP - minP, 9);
+  const priceDecimals = priceStep < 1 ? 2 : (priceStep < 10 ? 1 : 0);
+  ctx.strokeStyle = '#1C2530'; ctx.fillStyle='#7C8A9A'; ctx.font='10px JetBrains Mono'; ctx.lineWidth=1;
+  const gridStart = Math.ceil(minP/priceStep)*priceStep;
+  for(let p=gridStart; p<=maxP; p+=priceStep){
+    const y = yOf(p);
+    ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(W-padR,y); ctx.stroke();
+    ctx.fillText(p.toFixed(priceDecimals), 2, y+3);
+    ctx.fillText(p.toFixed(priceDecimals), W-padR+6, y+3);
+  }
+
+  // x-axis: date/time labels along the bottom
+  ctx.strokeStyle = '#1C2530'; ctx.fillStyle='#7C8A9A'; ctx.font='10px JetBrains Mono';
+  const isIntraday = App.chart.interval !== 'ONE_DAY';
+  const xLabelCount = Math.min(6, vCount);
+  for(let k=0; k<xLabelCount; k++){
+    const idx = vStart + Math.round(k*(vCount-1)/Math.max(1,xLabelCount-1));
+    const cndl = displayCandles[idx]; if(!cndl) continue;
+    const x = xOf(idx);
+    const d = new Date(cndl.t);
+    const label = isIntraday
+      ? d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:false})
+      : d.toLocaleDateString('en-IN',{day:'2-digit',month:'short'});
+    ctx.beginPath(); ctx.moveTo(x, H-padB); ctx.lineTo(x, H-padB+4); ctx.stroke();
+    const tw = ctx.measureText(label).width;
+    let lx = x - tw/2; lx = Math.max(padL, Math.min(W-padR-tw, lx));
+    ctx.fillText(label, lx, H-6);
+  }
+
+  // helper: draw a horizontal price reference line with a read-only tag on the right edge.
+  function drawPriceTag(price, color, label, dashed, opts){
+    if(price==null || !isFinite(price)) return;
+    opts = opts || {};
+    const y = Math.max(padT+6, Math.min(H-padB-6, yOf(price)));
+    ctx.save();
+    ctx.strokeStyle = color; ctx.lineWidth = 1.2;
+    if(dashed) ctx.setLineDash([5,4]);
+    ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(W-padR,y); ctx.stroke();
+    ctx.setLineDash([]);
+    let text = label + ' ' + price.toFixed(2);
+    if(opts.qty!=null) text += ' ×' + opts.qty;
+    if(opts.pnl!=null) text += (opts.pnl>=0?' +₹':' -₹') + Math.abs(opts.pnl).toFixed(0);
+    ctx.font = '10px JetBrains Mono';
+    const tw = ctx.measureText(text).width;
+    const boxX = W-padR+2, boxY = y-8, boxW = tw+8, boxH = 16;
+    ctx.fillStyle = color;
+    ctx.fillRect(boxX, boxY, boxW, boxH);
+    ctx.fillStyle = '#0A0D12';
+    ctx.fillText(text, W-padR+6, y+3);
+    ctx.restore();
+  }
+
+  // ---- candle rendering (type-aware) ----
+  const ctype = App.chart.candleType || 'candlestick';
+  if(ctype==='line' || ctype==='area'){
+    if(ctype==='area'){
+      ctx.beginPath();
+      visIdx.forEach((i,k)=>{ const x=xOf(i), y=yOf(displayCandles[i].c); if(k===0) ctx.moveTo(x,y); else ctx.lineTo(x,y); });
+      ctx.lineTo(xOf(visIdx[visIdx.length-1]), H-padB); ctx.lineTo(xOf(visIdx[0]), H-padB); ctx.closePath();
+      ctx.fillStyle = 'rgba(242,169,59,0.12)'; ctx.fill();
+    }
+    ctx.strokeStyle = '#F2A93B'; ctx.lineWidth = 1.8; ctx.beginPath();
+    visIdx.forEach((i,k)=>{ const x=xOf(i), y=yOf(displayCandles[i].c); if(k===0) ctx.moveTo(x,y); else ctx.lineTo(x,y); });
+    ctx.stroke();
+  } else if(ctype==='ohlc'){
+    visIdx.forEach(i=>{
+      const c = displayCandles[i]; const x = xOf(i);
+      const up = c.c>=c.o; ctx.strokeStyle = up?'#12C48B':'#FF5D6C'; ctx.lineWidth=1.4;
+      ctx.beginPath(); ctx.moveTo(x, yOf(c.h)); ctx.lineTo(x, yOf(c.l)); ctx.stroke();
+      const tick = Math.max(candleW*0.35,2);
+      ctx.beginPath(); ctx.moveTo(x-tick, yOf(c.o)); ctx.lineTo(x, yOf(c.o)); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x, yOf(c.c)); ctx.lineTo(x+tick, yOf(c.c)); ctx.stroke();
+    });
+  } else {
+    // candlestick / hollow / heikinashi (all rendered as OHLC bodies)
+    visIdx.forEach(i=>{
+      const c = displayCandles[i]; const x = xOf(i);
+      const up = c.c >= c.o;
+      const col = up ? '#12C48B' : '#FF5D6C';
+      ctx.strokeStyle = col; ctx.fillStyle = col;
+      ctx.beginPath(); ctx.moveTo(x, yOf(c.h)); ctx.lineTo(x, yOf(c.l)); ctx.stroke();
+      const bodyTop = yOf(Math.max(c.o,c.c)), bodyBot = yOf(Math.min(c.o,c.c));
+      const bw = Math.max(candleW*0.6,1);
+      if(ctype==='hollow' && up){
+        ctx.lineWidth = 1.4; ctx.strokeRect(x-bw/2, bodyTop, bw, Math.max(bodyBot-bodyTop,1));
+      } else {
+        ctx.fillRect(x-bw/2, bodyTop, bw, Math.max(bodyBot-bodyTop,1));
+      }
+    });
+  }
+
+  function drawLine(vals, color){
+    ctx.strokeStyle = color; ctx.lineWidth = 1.6; ctx.beginPath();
+    let started=false;
+    visIdx.forEach(i=>{
+      const v = vals[i]; if(v==null) return;
+      const x=xOf(i), y=yOf(v);
+      if(!started){ ctx.moveTo(x,y); started=true; } else ctx.lineTo(x,y);
+    });
+    ctx.stroke();
+  }
+  if(document.getElementById('indSMA').checked) drawLine(smaVals, '#F2A93B');
+  if(document.getElementById('indEMA').checked) drawLine(emaVals, '#4FA3FF');
+  if(document.getElementById('indVWAP').checked) drawLine(vwapVals, '#B084F5');
+  if(document.getElementById('indBB').checked){
+    drawLine(bbVals.upper, 'rgba(79,163,255,0.7)'); drawLine(bbVals.mid, 'rgba(79,163,255,0.35)'); drawLine(bbVals.lower, 'rgba(79,163,255,0.7)');
+  }
+  if(document.getElementById('indST').checked){
+    // colour SuperTrend line by trend direction (green=uptrend support, red=downtrend resistance)
+    let started=false, curDir=null;
+    visIdx.forEach(i=>{
+      const v = stVals.line[i]; if(v==null) return;
+      if(curDir!==stVals.dir[i]){ ctx.stroke(); ctx.beginPath(); started=false; curDir=stVals.dir[i]; ctx.strokeStyle = curDir===1?'#12C48B':'#FF5D6C'; ctx.lineWidth=1.6; }
+      const x=xOf(i), y=yOf(v);
+      if(!started){ ctx.moveTo(x,y); started=true; } else ctx.lineTo(x,y);
+    });
+    ctx.stroke();
+  }
+
+  // ---- saved drawings (H-Line / Trend / Fib) for this stock ----
+  ctx.save();
+  getMyDrawings().forEach(d=>{
+    if(d.type==='hline'){
+      ctx.strokeStyle = '#B084F5'; ctx.lineWidth=1; ctx.setLineDash([6,4]);
+      const y = yOf(d.price);
+      ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(W-padR,y); ctx.stroke();
+      ctx.setLineDash([]); ctx.fillStyle='#B084F5'; ctx.font='10px JetBrains Mono';
+      ctx.fillText(d.price.toFixed(2), padL+4, y-3);
+    } else if(d.type==='trend'){
+      ctx.strokeStyle = '#F2A93B'; ctx.lineWidth=1.4; ctx.setLineDash([]);
+      ctx.beginPath(); ctx.moveTo(xOf(d.i1), yOf(d.p1)); ctx.lineTo(xOf(d.i2), yOf(d.p2)); ctx.stroke();
+    } else if(d.type==='fib'){
+      const lo = Math.min(xOf(d.i1), xOf(d.i2)), hi = Math.max(xOf(d.i1), xOf(d.i2));
+      [0,0.236,0.382,0.5,0.618,0.786,1].forEach(lv=>{
+        const price = d.p2 + (d.p1-d.p2)*lv;
+        const y = yOf(price);
+        ctx.strokeStyle = 'rgba(79,163,255,0.55)'; ctx.setLineDash([4,3]); ctx.lineWidth=1;
+        ctx.beginPath(); ctx.moveTo(lo,y); ctx.lineTo(hi,y); ctx.stroke(); ctx.setLineDash([]);
+        ctx.fillStyle='#4FA3FF'; ctx.font='9.5px JetBrains Mono';
+        ctx.fillText(lv.toFixed(3)+' — '+price.toFixed(2), lo+3, y-2);
+      });
+    }
+  });
+  if(App.chart.pendingDraw && App.chart._crossX!=null){
+    const d = App.chart.pendingDraw;
+    ctx.strokeStyle='#7C8A9A'; ctx.setLineDash([3,3]); ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(xOf(d.i1), yOf(d.p1)); ctx.lineTo(App.chart._crossX, App.chart._crossY); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+  ctx.restore();
+
+  // live price + my order/position reference lines for this stock
+  drawPriceTag(last.c, '#E7ECF2', 'LTP', true);
+  const myHold = App.paperHoldings.find(h => h.token === App.chart.token);
+  if(myHold){
+    const pnl = (last.c - myHold.avg) * myHold.qty;
+    drawPriceTag(myHold.avg, myHold.qty>0 ? '#4FA3FF' : '#FF5D6C', myHold.qty>0 ? 'BUY' : 'SELL', false,
+      { qty: Math.abs(myHold.qty), pnl });
+    if(myHold.target) drawPriceTag(myHold.target, '#12C48B', '🎯', true);
+    if(myHold.sl) drawPriceTag(myHold.sl, '#FF5D6C', '🛑', true);
+  }
+  if(App.mode==='live' && App.chart.livePos && App.chart.livePos.symboltoken===App.chart.token){
+    const p = App.chart.livePos;
+    const netqty = parseInt(p.netqty);
+    drawPriceTag(parseFloat(p.avgnetprice), netqty>0 ? '#4FA3FF' : '#FF5D6C', netqty>0 ? 'LONG' : 'SHORT', false,
+      { qty: Math.abs(netqty), pnl: parseFloat(p.pnl||0) });
+  }
+
+  // ---- crosshair overlay + readout bar ----
+  const bar = document.getElementById('crosshairBar');
+  if(App.chart.crosshairOn && App.chart._crossX!=null && App.chart._crossX>=padL && App.chart._crossX<=W-padR){
+    const idx = Math.max(0, Math.min(N-1, indexFromX(App.chart._crossX)));
+    const c = candles[idx];
+    ctx.save();
+    ctx.strokeStyle = 'rgba(231,236,242,0.45)'; ctx.setLineDash([3,3]); ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(App.chart._crossX, padT); ctx.lineTo(App.chart._crossX, H-padB); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(padL, App.chart._crossY); ctx.lineTo(W-padR, App.chart._crossY); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
+    document.getElementById('chO').textContent = c.o.toFixed(2);
+    document.getElementById('chH').textContent = c.h.toFixed(2);
+    document.getElementById('chL').textContent = c.l.toFixed(2);
+    document.getElementById('chC').textContent = c.c.toFixed(2);
+    document.getElementById('chV').textContent = (c.v||0).toLocaleString('en-IN');
+    document.getElementById('chT').textContent = new Date(c.t).toLocaleString('en-IN',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+    bar.classList.add('show');
+  } else {
+    bar.classList.remove('show');
+  }
+
+  // indicator sub-panel: RSI, MACD or ATR
+  const indCv = document.getElementById('indicatorCanvas');
+  const ictx = indCv.getContext('2d');
+  const iW = indCv.clientWidth || 800, iH=140;
+  indCv.width=iW; indCv.height=iH;
+  ictx.clearRect(0,0,iW,iH);
+  const showRSI = document.getElementById('indRSI').checked;
+  const showMACD = document.getElementById('indMACD').checked;
+  const showATR = document.getElementById('indATR').checked;
+  const ipadL=50, ipadR=10, ipadT=10, ipadB=16;
+  const iPlotW = iW-ipadL-ipadR, iPlotH = iH-ipadT-ipadB;
+  const ixOf = i => ipadL + (i-vStart)*(iPlotW/vCount) + (iPlotW/vCount)/2;
+
+  if(showRSI){
+    const iyOf = v => ipadT + (1-(v/100))*iPlotH;
+    ictx.strokeStyle='#232B36'; ictx.fillStyle='#7C8A9A'; ictx.font='10px JetBrains Mono';
+    [30,50,70].forEach(v=>{ const y=iyOf(v); ictx.beginPath(); ictx.moveTo(ipadL,y); ictx.lineTo(iW-ipadR,y); ictx.stroke(); ictx.fillText(v, 2, y+3); });
+    ictx.strokeStyle='#F2A93B'; ictx.lineWidth=1.6; ictx.beginPath();
+    let started=false;
+    visIdx.forEach(i=>{ const v=rsiVals[i]; if(v==null) return; const x=ixOf(i), y=iyOf(v); if(!started){ictx.moveTo(x,y); started=true;} else ictx.lineTo(x,y); });
+    ictx.stroke();
+  } else if(showMACD){
+    const visMacd = visIdx.map(i=>macdVals.macdLine[i]).filter(v=>v!=null);
+    const visHist = visIdx.map(i=>macdVals.hist[i]).filter(v=>v!=null);
+    let minM = Math.min(...visMacd, ...visHist, 0);
+    let maxM = Math.max(...visMacd, ...visHist, 0);
+    const rangeM = (maxM-minM)||1;
+    const iyOf = v => ipadT + (1-(v-minM)/rangeM)*iPlotH;
+    ictx.strokeStyle='#232B36'; ictx.beginPath(); const zy=iyOf(0); ictx.moveTo(ipadL,zy); ictx.lineTo(iW-ipadR,zy); ictx.stroke();
+    visIdx.forEach(i=>{
+      const v = macdVals.hist[i]; if(v==null) return;
+      const x=ixOf(i); const y0=iyOf(0), y1=iyOf(v);
+      ictx.fillStyle = v>=0 ? '#12C48B' : '#FF5D6C';
+      ictx.fillRect(x-1.5, Math.min(y0,y1), 3, Math.abs(y1-y0));
+    });
+    ictx.strokeStyle='#4FA3FF'; ictx.lineWidth=1.4; ictx.beginPath(); let st=false;
+    visIdx.forEach(i=>{ const v=macdVals.macdLine[i]; if(v==null) return; const x=ixOf(i), y=iyOf(v); if(!st){ictx.moveTo(x,y); st=true;} else ictx.lineTo(x,y); });
+    ictx.stroke();
+    ictx.strokeStyle='#F2A93B'; ictx.lineWidth=1.4; ictx.beginPath(); st=false;
+    visIdx.forEach(i=>{ const v=macdVals.signalLine[i]; if(v==null) return; const x=ixOf(i), y=iyOf(v); if(!st){ictx.moveTo(x,y); st=true;} else ictx.lineTo(x,y); });
+    ictx.stroke();
+  } else if(showATR){
+    const visAtr = visIdx.map(i=>atrVals[i]).filter(v=>v!=null);
+    const maxA = Math.max(...visAtr, 0.01);
+    const iyOf = v => ipadT + (1-(v/maxA))*iPlotH;
+    ictx.strokeStyle='#232B36'; ictx.fillStyle='#7C8A9A'; ictx.font='10px JetBrains Mono';
+    ictx.beginPath(); ictx.moveTo(ipadL,ipadT); ictx.lineTo(iW-ipadR,ipadT); ictx.stroke();
+    ictx.fillText(maxA.toFixed(2), 2, ipadT+8);
+    ictx.strokeStyle='#F2A93B'; ictx.lineWidth=1.6; ictx.beginPath(); let st=false;
+    visIdx.forEach(i=>{ const v=atrVals[i]; if(v==null) return; const x=ixOf(i), y=iyOf(v); if(!st){ictx.moveTo(x,y); st=true;} else ictx.lineTo(x,y); });
+    ictx.stroke();
+  } else {
+    indCv.style.display='none';
+  }
+  if(showRSI || showMACD || showATR) indCv.style.display='block';
+}
+
+async function renderChartOrdersList(){
+  const el = document.getElementById('chartOrdersList');
+  if(!el || !App.chart.symbol) return;
+  const sym = App.chart.symbol;
+  const rows = [];
+
+  if(App.mode === 'paper'){
+    const hold = App.paperHoldings.find(h => h.token === App.chart.token);
+    if(hold){
+      const ltp = App.chart.candles.length ? App.chart.candles[App.chart.candles.length-1].c : hold.avg;
+      const pnl = (ltp - hold.avg) * hold.qty;
+      rows.push(`<div style="margin-bottom:6px;">
+        <span class="badge ${hold.qty>0?'buy':'sell'}">${hold.qty>0?'BUY':'SELL'}</span>
+        Qty ${Math.abs(hold.qty)} @ ₹${hold.avg.toFixed(2)} &nbsp; LTP ₹${ltp.toFixed(2)}
+        &nbsp; P&amp;L <span class="${pnl>=0?'upv':'downv'}">${pnl>=0?'+':''}₹${pnl.toFixed(2)}</span>
+        ${hold.target?` &nbsp;🎯 ₹${hold.target.toFixed(2)}`:''}${hold.sl?` &nbsp;🛑 ₹${hold.sl.toFixed(2)}`:''}
+      </div>`);
+    }
+    const matching = App.paperOrders.filter(o => o.symbol === sym).slice(0,8);
+    if(matching.length===0 && !hold){ el.innerHTML = '<span style="color:var(--muted);">இந்த ஸ்டாக்கிற்கு ஆர்டர் இல்ல</span>'; return; }
+    if(matching.length) rows.push(matching.map(o => `<div style="padding:4px 0;border-bottom:1px solid var(--border);">
+        <span class="badge ${o.side==='BUY'?'buy':'sell'}">${o.side}</span>
+        Qty ${o.qty} @ ₹${(+o.price).toFixed(2)}
+        <span style="color:var(--muted);"> — ${new Date(o.time).toLocaleString('en-IN')}</span>
+      </div>`).join(''));
+    el.innerHTML = rows.join('');
+    return;
+  }
+
+  // LIVE mode — pull the real position + order-book entries for this exact stock
+  if(!App.session){ el.innerHTML = '<span style="color:var(--muted);">Live விவரங்களுக்கு Angel One login தேவை</span>'; return; }
+  const now = Date.now();
+  window.__chartOrdersFetch = window.__chartOrdersFetch || { token:null, ts:0 };
+  if(window.__chartOrdersFetch.token === App.chart.token && (now - window.__chartOrdersFetch.ts) < 6000){
+    return; // skip — already fetched this stock within the last 6s, avoid Angel One rate-limit (403)
+  }
+  window.__chartOrdersFetch = { token: App.chart.token, ts: now };
+  el.innerHTML = '<span style="color:var(--muted);">ஏற்றுகிறது...</span>';
+  try{
+    await refreshSessionIfNeeded();
+    const [posRes, obRes] = await Promise.all([
+      fetch(BASE + '/rest/secure/angelbroking/order/v1/getPosition', { headers: commonHeaders() }),
+      fetch(BASE + '/rest/secure/angelbroking/order/v1/getOrderBook', { headers: commonHeaders() })
+    ]);
+    const posData = await safeJson(posRes);
+    const obData = await safeJson(obRes);
+    const pos = (posData.data||[]).find(p => p.symboltoken === App.chart.token && parseInt(p.netqty||0)!==0);
+    const orders = (obData.data||[]).filter(o => o.symboltoken === App.chart.token || o.tradingsymbol === sym);
+    App.chart.livePos = pos || null;
+    if(App.chart.candles.length) renderChartCanvas();
+
+    if(pos){
+      const pnl = parseFloat(pos.pnl||0);
+      rows.push(`<div style="margin-bottom:6px;">
+        <span class="badge ${pos.netqty>=0?'buy':'sell'}">${pos.netqty>=0?'LONG':'SHORT'}</span>
+        Qty ${Math.abs(pos.netqty)} @ ₹${parseFloat(pos.avgnetprice||0).toFixed(2)} &nbsp; LTP ₹${parseFloat(pos.ltp||0).toFixed(2)}
+        &nbsp; P&amp;L <span class="${pnl>=0?'upv':'downv'}">${pnl>=0?'+':''}₹${pnl.toFixed(2)}</span>
+      </div>`);
+    }
+    if(orders.length){
+      rows.push(orders.slice(0,8).map(o=>`<div style="padding:4px 0;border-bottom:1px solid var(--border);">
+        <span class="badge ${o.transactiontype==='BUY'?'buy':'sell'}">${o.transactiontype}</span>
+        Qty ${o.quantity} @ ₹${o.price} — ${o.status}
+        <span style="color:var(--muted);"> (${o.updatetime||''})</span>
+      </div>`).join(''));
+    }
+    el.innerHTML = rows.length ? rows.join('') : '<span style="color:var(--muted);">இந்த ஸ்டாக்கிற்கு ஆர்டர்/Position இல்ல</span>';
+  }catch(e){ el.innerHTML = `<span class="downv">பிழை: ${e.message}</span>`; }
+}
+
+/* ---------------- Portfolio / Positions / Orderbook rendering ---------------- */
+async function renderPortfolio(){
+  const body = document.getElementById('holdingsBody');
+  const paperPanel = document.getElementById('paperCashPanel');
+  if(App.mode==='paper'){
+    paperPanel.style.display='block';
+    document.getElementById('paperCashVal').textContent = '₹' + App.paperCash.toFixed(2);
+    if(App.paperHoldings.length===0){ body.innerHTML = '<tr><td colspan="6" class="emptyState">Holdings இல்ல</td></tr>'; return; }
+    let rows = '';
+    for(const h of [...App.paperHoldings]){
+      let ltp = h.avg;
+      if(App.session){ try{ const map={}; map[h.exch]=[h.token]; const f = await getQuotes(map,'LTP'); ltp = f[0]?f[0].ltp:h.avg; }catch(e){} }
+      const pnl = (ltp-h.avg)*h.qty;
+      const pnlp = h.avg? (pnl/(h.avg*h.qty)*100):0;
+      const tsBadge = (h.target||h.sl) ? ` <small style="color:var(--muted);">(🎯${h.target||'-'} / 🛑${h.sl||'-'})</small>` : '';
+      rows += `<tr><td>${h.symbol.replace('-EQ','')}${tsBadge}</td><td>${h.qty}</td><td>${h.avg.toFixed(2)}</td><td>${ltp.toFixed(2)}</td>
+        <td class="${pnl>=0?'upv':'downv'}">${pnl>=0?'+':''}${pnl.toFixed(2)}</td><td class="${pnl>=0?'upv':'downv'}">${pnlp.toFixed(2)}%</td></tr>`;
+    }
+    body.innerHTML = rows || '<tr><td colspan="6" class="emptyState">Holdings இல்ல</td></tr>';
+  } else {
+    paperPanel.style.display='none';
+    if(!App.session){ body.innerHTML = '<tr><td colspan="6" class="emptyState">Login தேவை</td></tr>'; return; }
+    try{
+      await refreshSessionIfNeeded();
+      const res = await fetch(BASE + '/rest/secure/angelbroking/portfolio/v1/getHolding', { headers: commonHeaders() });
+      const data = await safeJson(res);
+      const holdings = data.data || [];
+      if(holdings.length===0){ body.innerHTML = '<tr><td colspan="6" class="emptyState">Holdings இல்ல</td></tr>'; return; }
+      body.innerHTML = holdings.map(h=>{
+        const pnl = (h.ltp-h.averageprice)*h.quantity;
+        const pnlp = h.averageprice? (pnl/(h.averageprice*h.quantity)*100):0;
+        return `<tr><td>${h.tradingsymbol}</td><td>${h.quantity}</td><td>${h.averageprice.toFixed(2)}</td><td>${h.ltp.toFixed(2)}</td>
+          <td class="${pnl>=0?'upv':'downv'}">${pnl>=0?'+':''}${pnl.toFixed(2)}</td><td class="${pnl>=0?'upv':'downv'}">${pnlp.toFixed(2)}%</td></tr>`;
+      }).join('');
+    }catch(e){ body.innerHTML = `<tr><td colspan="6" class="emptyState">பிழை: ${e.message}</td></tr>`; }
+  }
+}
+async function renderPositions(){
+  const body = document.getElementById('positionsBody');
+  if(App.mode==='paper'){ body.innerHTML = '<tr><td colspan="7" class="emptyState">Paper mode-ல Positions = Holdings tab பாருங்க (intraday tracking இல்ல)</td></tr>'; return; }
+  if(!App.session){ body.innerHTML = '<tr><td colspan="7" class="emptyState">Login தேவை</td></tr>'; return; }
+  try{
+    await refreshSessionIfNeeded();
+    const res = await fetch(BASE + '/rest/secure/angelbroking/order/v1/getPosition', { headers: commonHeaders() });
+    const data = await safeJson(res);
+    const positions = data.data || [];
+    if(positions.length===0){ body.innerHTML = '<tr><td colspan="7" class="emptyState">Positions இல்ல</td></tr>'; return; }
+    body.innerHTML = positions.map((p,idx)=>{
+      const netqty = parseInt(p.netqty||0);
+      const isClosed = netqty === 0;
+      const pnl = parseFloat(p.pnl!=null ? p.pnl : (p.realised||0) + (p.unrealised||0));
+      const buyAvg = parseFloat(p.buyavgprice||0), sellAvg = parseFloat(p.sellavgprice||0);
+      const ltp = parseFloat(p.ltp||0);
+      const prevClose = parseFloat(p.close||0);
+      const pct = prevClose ? ((ltp-prevClose)/prevClose*100) : null;
+      window.__posCache = window.__posCache || {};
+      window.__posCache[idx] = p;
+      return `<tr>
+        <td>${p.tradingsymbol}<br><span style="font-size:10.5px;color:var(--muted);">${p.producttype||''}</span></td>
+        <td><span class="badge ${isClosed?'':(netqty>=0?'buy':'sell')}" style="${isClosed?'background:var(--panel2);color:var(--muted);':''}">${isClosed?'CLOSED':(netqty>=0?'LONG':'SHORT')}</span></td>
+        <td>${isClosed ? '0' : netqty}</td>
+        <td style="font-size:11px;">${buyAvg?`<span class="vGreen">B ${buyAvg.toFixed(2)}</span><br>`:''}${sellAvg?`<span class="vRed">S ${sellAvg.toFixed(2)}</span>`:''}</td>
+        <td class="${pct!=null?(pct>=0?'upv':'downv'):''}">${ltp?ltp.toFixed(2):'—'}${pct!=null?` (${pct>=0?'+':''}${pct.toFixed(2)}%)`:''}</td>
+        <td class="${pnl>=0?'upv':'downv'}">${pnl>=0?'+':''}${pnl.toFixed(2)}</td>
+        <td style="white-space:nowrap;">
+          <button class="iconBtn" title="சார்ட் பார்" onclick="openInChart('${p.symboltoken}','${p.exchange}','${p.tradingsymbol}')">📈</button>
+        </td></tr>`;
+    }).join('');
+  }catch(e){ body.innerHTML = `<tr><td colspan="7" class="emptyState">பிழை: ${e.message}</td></tr>`; }
+}
+async function renderOrderbook(){
+  const body = document.getElementById('orderbookBody');
+  if(App.mode==='paper'){
+    if(App.paperOrders.length===0){ body.innerHTML = '<tr><td colspan="8" class="emptyState">ஆர்டர்கள் இல்ல</td></tr>'; return; }
+    body.innerHTML = App.paperOrders.map((o,idx)=>`
+      <tr><td>${new Date(o.time).toLocaleTimeString('en-IN')}</td><td>${o.symbol.replace('-EQ','')}</td>
+      <td><span class="badge ${o.side==='BUY'?'buy':'sell'}">${o.side}</span></td><td>${o.orderType}</td><td>${o.qty}</td>
+      <td>${o.price.toFixed(2)}</td><td>${o.status}</td>
+      <td><button class="iconBtn" onclick="deletePaperOrder(${idx})">✕</button></td></tr>`).join('');
+    return;
+  }
+  if(!App.session){ body.innerHTML = '<tr><td colspan="8" class="emptyState">Login தேவை</td></tr>'; return; }
+  try{
+    await refreshSessionIfNeeded();
+    const res = await fetch(BASE + '/rest/secure/angelbroking/order/v1/getOrderBook', { headers: commonHeaders() });
+    const data = await safeJson(res);
+    const orders = data.data || [];
+    if(orders.length===0){ body.innerHTML = '<tr><td colspan="8" class="emptyState">ஆர்டர்கள் இல்ல</td></tr>'; return; }
+    body.innerHTML = orders.map(o=>`
+      <tr><td>${o.updatetime||''}</td><td>${o.tradingsymbol}</td>
+      <td><span class="badge ${o.transactiontype==='BUY'?'buy':'sell'}">${o.transactiontype}</span></td><td>${o.ordertype}</td>
+      <td>${o.quantity}</td><td>${o.price}</td><td>${o.status}</td><td></td></tr>`).join('');
+  }catch(e){ body.innerHTML = `<tr><td colspan="8" class="emptyState">பிழை: ${e.message}</td></tr>`; }
+}
+window.deletePaperOrder = function(idx){ App.paperOrders.splice(idx,1); persist(); renderOrderbook(); };
+window.removeFromWatchlist = removeFromWatchlist;
+
+function renderJournal(){
+  const list = document.getElementById('journalList');
+  if(!list) return;
+  if(App.journal.length===0){ list.innerHTML = '<div class="emptyState">குறிப்புகள் இல்லை</div>'; return; }
+  const groups = {};
+  App.journal.forEach((j,idx) => { j.__idx = idx; (groups[j.date] = groups[j.date]||[]).push(j); });
+  const dates = Object.keys(groups).sort().reverse();
+  list.innerHTML = dates.map(date => `
+    <div style="margin-bottom:18px;">
+      <div style="font-weight:700;color:var(--amber);margin-bottom:6px;">${date}</div>
+      ${groups[date].map(j => `
+        <div style="padding:8px 10px;border:1px solid var(--border);border-radius:6px;margin-bottom:6px;">
+          <div style="display:flex;justify-content:space-between;gap:10px;">
+            <span>${j.symbol ? `<span class="badge ${j.side==='BUY'?'buy':'sell'}" style="margin-right:6px;">${j.side}</span>` : ''}${escapeHtml(j.text)}</span>
+            <span style="display:flex;gap:8px;align-items:center;color:var(--muted);white-space:nowrap;">
+              ${j.time||''}
+              <button class="btnSmGhost" onclick="deleteJournalEntry(${j.__idx})" style="padding:2px 8px;">✕</button>
+            </span>
+          </div>
+          ${j.symbol ? `<input type="text" class="journalNoteField" placeholder="இந்த டிரேட்-க்கு உங்க குறிப்பு எழுதுங்க..." value="${escapeHtml(j.note||'')}" onchange="updateJournalNote(${j.__idx}, this.value)" style="width:100%;margin-top:6px;padding:6px 8px;font-size:12.5px;background:var(--panel2);border:1px solid var(--border);border-radius:6px;color:var(--text);">` : ''}
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
+}
+window.updateJournalNote = function(idx, val){
+  if(App.journal[idx]){ App.journal[idx].note = val; lsSet('journal', App.journal); }
+};
+window.deleteJournalEntry = function(idx){
+  App.journal.splice(idx,1);
+  lsSet('journal', App.journal);
+  renderJournal();
+};
+// NOTE: field names below follow Angel One SmartAPI's documented getTradeBook response;
+// if Angel One changes that response shape, re-check against their current docs.
+async function syncTodayTrades(){
+  if(!(App.mode==='live' && App.session)){ toast('Live login தேவை trades sync பண்ண','err'); return; }
+  try{
+    await refreshSessionIfNeeded();
+    const res = await fetch(BASE + '/rest/secure/angelbroking/order/v1/getTradeBook', { headers: commonHeaders() });
+    const data = await safeJson(res);
+    const trades = data.data || [];
+    const existingIds = new Set(App.journal.filter(j=>j.tradeId).map(j=>j.tradeId));
+    let added = 0;
+    trades.forEach(t=>{
+      const tid = t.tradeid || (t.orderid+'-'+t.fillsize+'-'+t.filltime);
+      if(!tid || existingIds.has(tid)) return;
+      const fillTime = t.filltime || t.exchtradetime || '';
+      const dateKey = fillTime.slice(0,10) || new Date().toISOString().slice(0,10);
+      const timeStr = fillTime.length>=16 ? fillTime.slice(11,16) : '';
+      const price = parseFloat(t.fillprice||0), qty = t.fillsize||t.quantity||0;
+      App.journal.unshift({
+        tradeId: tid, date: dateKey, time: timeStr,
+        symbol: t.tradingsymbol, side: t.transactiontype, qty, price,
+        text: `${t.transactiontype} ${qty} ${(t.tradingsymbol||'').replace('-EQ','')} @ ₹${price.toFixed(2)}`,
+        note: ''
+      });
+      added++;
+    });
+    if(added){ lsSet('journal', App.journal); renderJournal(); toast(added+' டிரேட்(கள்) குறிப்பேட்டில் சேர்க்கப்பட்டது','ok'); }
+  }catch(e){ /* silent — trade book may be empty or session momentarily unavailable */ }
+}
+
+/* ---------------- Financial-Year Realized P&L (FIFO match on synced journal trades) ---------------- */
+function generateFYList(){
+  const now = new Date();
+  const y = now.getFullYear(), m = now.getMonth()+1; // 1-12, Indian FY = Apr-Mar
+  const currentFYStartYear = m>=4 ? y : y-1;
+  const list = [];
+  for(let start=2023; start<=currentFYStartYear; start++){
+    list.push(`${start}-${String(start+1).slice(2)}`);
+  }
+  return list;
+}
+function fyDateRange(fyLabel){
+  const startYear = parseInt(fyLabel.split('-')[0]);
+  return { start: `${startYear}-04-01`, end: `${startYear+1}-03-31` };
+}
+function computeFYRealizedPnl(fyLabel){
+  const { start, end } = fyDateRange(fyLabel);
+  const trades = App.journal
+    .filter(j => j.symbol && j.qty!=null && j.price!=null && j.date>=start && j.date<=end)
+    .slice()
+    .sort((a,b)=> (a.date+(a.time||'')).localeCompare(b.date+(b.time||'')));
+  if(trades.length===0) return null;
+  const bySymbol = {};
+  trades.forEach(t => { (bySymbol[t.symbol] = bySymbol[t.symbol]||[]).push(t); });
+  let totalPnl = 0, matchedTrades = 0;
+  Object.values(bySymbol).forEach(list=>{
+    const queue = []; // FIFO lots: {side, qty, price}
+    list.forEach(t=>{
+      let remaining = t.qty;
+      while(remaining>0 && queue.length && queue[0].side!==t.side){
+        const lot = queue[0];
+        const matched = Math.min(lot.qty, remaining);
+        totalPnl += t.side==='SELL' ? (t.price-lot.price)*matched : (lot.price-t.price)*matched;
+        matchedTrades++;
+        lot.qty -= matched; remaining -= matched;
+        if(lot.qty<=0) queue.shift();
+      }
+      if(remaining>0) queue.push({ side:t.side, qty:remaining, price:t.price });
+    });
+  });
+  return { pnl: totalPnl, matchedTrades, totalTrades: trades.length };
+}
+function renderFYPnlPanel(){
+  const row = document.getElementById('fyRadioRow');
+  if(!row) return;
+  const list = generateFYList();
+  const selected = App.selectedFY && list.includes(App.selectedFY) ? App.selectedFY : list[list.length-1];
+  App.selectedFY = selected;
+  row.innerHTML = list.map(fy => `
+    <label style="display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer;">
+      <input type="radio" name="fyRadio" value="${fy}" ${fy===selected?'checked':''}> ${fy}
+    </label>`).join('');
+  row.querySelectorAll('input[name="fyRadio"]').forEach(r => r.addEventListener('change', ()=>{
+    App.selectedFY = r.value; renderFYPnlResult();
+  }));
+  renderFYPnlResult();
+}
+function renderFYPnlResult(){
+  const el = document.getElementById('fyPnlResult');
+  if(!el) return;
+  const result = computeFYRealizedPnl(App.selectedFY);
+  if(!result){
+    el.innerHTML = `<div class="lbl">${App.selectedFY}</div><div class="val" style="color:var(--muted);font-size:14px;">தரவு இல்லை</div>`;
+    return;
+  }
+  el.innerHTML = `<div class="lbl">${App.selectedFY} — Realized P&L (${result.matchedTrades} matched trades)</div>
+    <div class="val ${result.pnl>=0?'upv':'downv'}">${result.pnl>=0?'+':''}₹${result.pnl.toFixed(2)}</div>`;
+}
+
+/* ---------------- Tabs ---------------- */
+function switchTab(tab){
+  document.querySelectorAll('.tabBtn').forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
+  document.querySelectorAll('.tabContent').forEach(c=>c.classList.toggle('active', c.id==='tab-'+tab));
+  if(tab==='portfolio') renderPortfolio();
+  if(tab==='positions') renderPositions();
+  if(tab==='orderbook') renderOrderbook();
+  if(tab==='settings') renderFYPnlPanel();
+  if(tab==='journal'){ renderJournal(); if(App.mode==='live' && App.session) syncTodayTrades(); }
+}
+
+/* ---------------- Clock ---------------- */
+function tickClock(){
+  document.getElementById('clockBit').textContent = new Date().toLocaleTimeString('en-IN');
+}
+
+/* ---------------- Init ---------------- */
+function enterApp(){
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('appScreen').style.display = 'flex';
+  document.getElementById('modePill').textContent = App.mode.toUpperCase();
+  document.getElementById('modePill').className = 'modePill ' + App.mode;
+  document.getElementById('profileName').textContent = App.creds ? App.creds.clientCode : 'Paper Trader';
+  renderWatchlistTable();
+  refreshWatchlistQuotes();
+  refreshWatchlistRecommendations();
+  setInterval(refreshWatchlistQuotes, 15000);
+  refreshWorldMarkets();
+  setInterval(refreshWorldMarkets, 60000); // world indices don't need to refresh as often as NSE quotes
+  setInterval(refreshWatchlistRecommendations, 60000);
+  setInterval(refreshMarketDepth, 6000);
+  setInterval(tickClock, 1000); tickClock();
+  if(getCloudSyncUrl()){
+    setCloudSyncStatus('checking');
+    pullWatchlistsFromCloud(false).then(()=> startCloudSyncPolling());
+  } else {
+    setCloudSyncStatus('off');
+  }
+}
+
+document.addEventListener('DOMContentLoaded', ()=>{
+  // login mode radios
+  document.querySelectorAll('input[name="totpMode"]').forEach(r=>{
+    r.addEventListener('change', ()=>{
+      const isSecret = document.querySelector('input[name="totpMode"]:checked').value === 'secret';
+      document.getElementById('totpSecretField').style.display = isSecret ? 'block':'none';
+      document.getElementById('totpManualField').style.display = isSecret ? 'none':'block';
+    });
+  });
+  document.getElementById('btnLogin').addEventListener('click', doLogin);
+  document.getElementById('btnPaperOnly').addEventListener('click', startPaperOnly);
+  document.getElementById('btnLogout').addEventListener('click', logout);
+  document.getElementById('btnScripProxySettings').addEventListener('click', promptScripProxyUrl);
+  document.getElementById('btnCloudSyncSettings').addEventListener('click', promptCloudSyncUrl);
+  document.getElementById('cloudSyncStatus').addEventListener('click', promptCloudSyncUrl);
+  document.getElementById('btnForcePush').addEventListener('click', forcePushNow);
+  document.getElementById('btnForcePull').addEventListener('click', forcePullNow);
+  document.getElementById('btnSyncTrades').addEventListener('click', syncTodayTrades);
+  document.getElementById('btnAddJournalNote').addEventListener('click', ()=>{
+    const input = document.getElementById('journalNoteInput');
+    const text = input.value.trim();
+    if(!text) return;
+    addJournalEntry(text);
+    input.value = '';
+  });
+  document.getElementById('btnSwitchMode').addEventListener('click', ()=>{
+    if(App.mode==='live'){ App.mode='paper'; } else {
+      if(!App.session){ toast('Live mode-க்கு முதலில் Angel One login பண்ணணும்','err'); logout(); return; }
+      App.mode='live';
+    }
+    persist();
+    document.getElementById('modePill').textContent = App.mode.toUpperCase();
+    document.getElementById('modePill').className = 'modePill ' + App.mode;
+    renderPortfolio();
+    refreshWatchlistRecommendations();
+  });
+
+  document.querySelectorAll('.tabBtn').forEach(b=> b.addEventListener('click', ()=> switchTab(b.dataset.tab)));
+
+  bindSearchBox('stockSearchInput','searchDropdown', addToWatchlist);
+  bindSearchBox('chartSearchInput','chartSearchDropdown', (item)=> loadChartForToken(item.token, item.exch, item.symbol));
+
+  document.getElementById('btnRefreshWatchlist').addEventListener('click', refreshWatchlistQuotes);
+  document.getElementById('wlViewCompact').addEventListener('click', ()=> setWatchlistView('compact'));
+  document.getElementById('wlViewExpanded').addEventListener('click', ()=> setWatchlistView('expanded'));
+  document.getElementById('wlSortMode').addEventListener('change', (e)=> setWlSortMode(e.target.value));
+
+  document.getElementById('btnAllStocksSubtab').addEventListener('click', ()=>{
+    document.getElementById('btnAllStocksSubtab').classList.add('active');
+    document.getElementById('btnPremarketSubtab').classList.remove('active');
+    document.getElementById('allStocksSub-all').style.display = '';
+    document.getElementById('allStocksSub-premarket').style.display = 'none';
+  });
+  document.getElementById('btnPremarketSubtab').addEventListener('click', ()=>{
+    document.getElementById('btnPremarketSubtab').classList.add('active');
+    document.getElementById('btnAllStocksSubtab').classList.remove('active');
+    document.getElementById('allStocksSub-premarket').style.display = '';
+    document.getElementById('allStocksSub-all').style.display = 'none';
+  });
+  document.getElementById('btnLoadAllStocks').addEventListener('click', loadAllStocks);
+  document.getElementById('btnLoadPremarket').addEventListener('click', loadPremarket);
+  document.getElementById('allStocksSortMode').addEventListener('change', (e)=>{ App.allStocksSortMode = e.target.value; renderAllStocksTable(); });
+  document.getElementById('allStocksViewCompact').addEventListener('click', ()=>{
+    App.allStocksView = 'compact';
+    document.getElementById('allStocksViewCompact').classList.add('active');
+    document.getElementById('allStocksViewExpanded').classList.remove('active');
+    renderAllStocksTable();
+  });
+  document.getElementById('allStocksViewExpanded').addEventListener('click', ()=>{
+    App.allStocksView = 'expanded';
+    document.getElementById('allStocksViewExpanded').classList.add('active');
+    document.getElementById('allStocksViewCompact').classList.remove('active');
+    renderAllStocksTable();
+  });
+  document.getElementById('pmBuyStat').addEventListener('click', ()=> setPremarketFilter(App.premarketFilter==='buy' ? 'all' : 'buy'));
+  document.getElementById('pmSellStat').addEventListener('click', ()=> setPremarketFilter(App.premarketFilter==='sell' ? 'all' : 'sell'));
+  document.getElementById('pmClearStat').addEventListener('click', clearPremarketFilters);
+  document.getElementById('btnPmPriceApply').addEventListener('click', applyPremarketPriceFilter);
+  document.getElementById('wlSearchInput').addEventListener('input', (e)=>{ App.wlSearchQuery = e.target.value; renderWatchlistTable(); });
+  document.getElementById('allStocksSearchInput').addEventListener('input', (e)=>{ App.allStocksSearchQuery = e.target.value; renderAllStocksTable(); });
+  document.getElementById('btnAllStocksPriceApply').addEventListener('click', applyAllStocksPriceFilter);
+  document.getElementById('allStocksClearStat').addEventListener('click', clearAllStocksFilters);
+  document.getElementById('btnLoadChart').addEventListener('click', drawChart);
+  initDepthDrag();
+  initOrderModal();
+  document.querySelectorAll('.pillBtn').forEach(p=> p.addEventListener('click', ()=>{
+    document.querySelectorAll('.pillBtn').forEach(x=>x.classList.remove('active'));
+    p.classList.add('active');
+    App.chart.interval = p.dataset.interval;
+    drawChart();
+  }));
+  ['indSMA','indEMA','indVWAP','indBB','indST','indRSI','indMACD','indATR'].forEach(id=>{
+    document.getElementById(id).addEventListener('change', ()=>{ if(App.chart.candles.length) renderChartCanvas(); });
+  });
+
+  // ---- collapsible indicator overlay toggles ----
+  document.getElementById('btnToggleIndicators').addEventListener('click', ()=>{
+    const box = document.getElementById('indicatorTogglesBox');
+    box.style.display = box.style.display==='none' ? 'flex' : 'none';
+  });
+
+  // ---- chart candle type ----
+  document.getElementById('chartCandleType').value = App.chart.candleType;
+  document.getElementById('chartCandleType').addEventListener('change', (e)=>{
+    App.chart.candleType = e.target.value; lsSet('chartCandleType', App.chart.candleType);
+    if(App.chart.candles.length) renderChartCanvas();
+  });
+
+  // ---- drawing tools ----
+  document.getElementById('toolHLine').addEventListener('click', ()=> setChartTool('hline'));
+  document.getElementById('toolTrend').addEventListener('click', ()=> setChartTool('trend'));
+  document.getElementById('toolFib').addEventListener('click', ()=> setChartTool('fib'));
+  document.getElementById('btnClearDrawings').addEventListener('click', ()=>{
+    if(!confirm('இந்த ஸ்டாக்கின் drawing-கள் (H-Line/Trend/Fib) அனைத்தையும் அழிக்கவா?')) return;
+    App.chart.drawings[App.chart.token||'_'] = []; saveDrawings();
+    if(App.chart.candles.length) renderChartCanvas();
+  });
+  document.getElementById('btnZoomReset').addEventListener('click', resetChartView);
+  document.getElementById('btnZoomIn').addEventListener('click', ()=> window.__chartZoomAtCenter && window.__chartZoomAtCenter(0.8));
+  document.getElementById('btnZoomOut').addEventListener('click', ()=> window.__chartZoomAtCenter && window.__chartZoomAtCenter(1.25));
+  document.getElementById('toolCrosshair').addEventListener('click', ()=>{
+    App.chart.crosshairOn = !App.chart.crosshairOn;
+    document.getElementById('toolCrosshair').classList.toggle('active', App.chart.crosshairOn);
+    if(!App.chart.crosshairOn) document.getElementById('crosshairBar').classList.remove('show');
+    if(App.chart.candles.length) renderChartCanvas();
+  });
+  App.chart.crosshairOn = true;
+  document.getElementById('toolCrosshair').classList.add('active');
+
+  // ---- fullscreen (real Fullscreen API with CSS fallback for webviews) ----
+  function toggleChartFullscreen(){
+    const wrap = document.getElementById('chartPanelWrap');
+    const isFs = wrap.classList.contains('chartFullscreen');
+    if(isFs){
+      if(document.fullscreenElement) document.exitFullscreen().catch(()=>{});
+      wrap.classList.remove('chartFullscreen');
+    } else {
+      wrap.classList.add('chartFullscreen');
+      if(wrap.requestFullscreen) wrap.requestFullscreen().catch(()=>{});
+    }
+    setTimeout(()=>{ if(App.chart.candles.length) renderChartCanvas(); }, 50);
+  }
+  document.getElementById('chartFullscreenBtn').addEventListener('click', toggleChartFullscreen);
+  document.addEventListener('fullscreenchange', ()=>{
+    if(!document.fullscreenElement) document.getElementById('chartPanelWrap').classList.remove('chartFullscreen');
+  });
+
+  // ---- chart keyboard shortcuts (only when chart tab active, not while typing) ----
+  document.addEventListener('keydown', (e)=>{
+    const tag = (e.target.tagName||'').toLowerCase();
+    if(tag==='input' || tag==='select' || tag==='textarea') return;
+    const chartTabActive = document.getElementById('tab-chart').classList.contains('active');
+    if(!chartTabActive) return;
+    if(e.key==='f' || e.key==='F'){ toggleChartFullscreen(); }
+    else if(e.key==='Escape'){
+      if(document.getElementById('chartPanelWrap').classList.contains('chartFullscreen')) toggleChartFullscreen();
+      else if(App.chart.drawTool){ setChartTool(App.chart.drawTool); }
+    }
+    else if(e.key===' '){ e.preventDefault(); document.getElementById('toolCrosshair').click(); }
+    else if(e.key==='+' || e.key==='='){ App.chart.view.count = Math.max(15, Math.round(App.chart.view.count*0.85)); renderChartCanvas(); }
+    else if(e.key==='-'){ App.chart.view.count = Math.min(App.chart.candles.length||9999, Math.round(App.chart.view.count*1.15)); renderChartCanvas(); }
+  });
+
+  document.getElementById('btnRefreshPortfolio').addEventListener('click', renderPortfolio);
+  document.getElementById('btnRefreshPositions').addEventListener('click', renderPositions);
+  document.getElementById('btnRefreshOrderbook').addEventListener('click', renderOrderbook);
+
+  document.getElementById('btnResetCash').addEventListener('click', ()=>{
+    const v = parseFloat(document.getElementById('resetCashInput').value);
+    if(v>0){ App.paperCash=v; App.paperHoldings=[]; App.paperOrders=[]; persist(); renderPortfolio(); renderOrderbook(); toast('Paper cash reset ஆகிடுச்சு','ok'); }
+  });
+  document.getElementById('btnAddFunds').addEventListener('click', ()=>{
+    const v = parseFloat(document.getElementById('fundsAmountInput').value);
+    if(v>0){ App.paperCash += v; persist(); renderPortfolio(); document.getElementById('fundsAmountInput').value=''; toast('₹'+v.toFixed(0)+' பணம் சேர்க்கப்பட்டது','ok'); }
+    else { toast('சரியான தொகை கொடுங்க','err'); }
+  });
+  document.getElementById('btnWithdrawFunds').addEventListener('click', ()=>{
+    const v = parseFloat(document.getElementById('fundsAmountInput').value);
+    if(!(v>0)){ toast('சரியான தொகை கொடுங்க','err'); return; }
+    if(v > App.paperCash){ toast('கையிருப்பு பணத்தை விட அதிகமா எடுக்க முடியாது','err'); return; }
+    App.paperCash -= v; persist(); renderPortfolio(); document.getElementById('fundsAmountInput').value='';
+    toast('₹'+v.toFixed(0)+' பணம் எடுக்கப்பட்டது','ok');
+  });
+
+  document.getElementById('btnExportData').addEventListener('click', ()=>{
+    const exportObj = { watchlists:App.watchlists, activeWatchlistId:App.activeWatchlistId, watchlistView:App.watchlistView, paperCash:App.paperCash, paperHoldings:App.paperHoldings, paperOrders:App.paperOrders, journal:App.journal, mode:App.mode };
+    const blob = new Blob([JSON.stringify(exportObj,null,2)], {type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = 'dhass-trade-data.json'; a.click();
+  });
+  document.getElementById('importFileInput').addEventListener('change', (e)=>{
+    const file = e.target.files[0];
+    if(!file){ console.warn('Dhass Trade Terminal - import: no file selected'); return; }
+    console.log('Dhass Trade Terminal - importing file:', file.name, file.size, 'bytes');
+    const reader = new FileReader();
+    reader.onerror = ()=>{
+      console.error('Dhass Trade Terminal - file read error:', reader.error);
+      toast('கோப்பை படிக்க முடியவில்லை: ' + (reader.error ? reader.error.message : 'தெரியாத பிழை'), 'err');
+    };
+    reader.onload = ()=>{
+      try{
+        const obj = JSON.parse(reader.result);
+        if(obj.watchlists && Array.isArray(obj.watchlists) && obj.watchlists.length){
+          App.watchlists = obj.watchlists;
+          App.activeWatchlistId = obj.activeWatchlistId && App.watchlists.find(w=>w.id===obj.activeWatchlistId) ? obj.activeWatchlistId : App.watchlists[0].id;
+          App.watchlistView = obj.watchlistView || App.watchlistView;
+        } else if(obj.watchlist && Array.isArray(obj.watchlist)){
+          // backward compat: pre-upgrade single flat watchlist export
+          const id = 'wl_'+Date.now();
+          App.watchlists = [{ id, name:'Watchlist 1', stocks:obj.watchlist, pinned:false, favourite:false }];
+          App.activeWatchlistId = id;
+        }
+        App.paperCash = obj.paperCash!=null? obj.paperCash : App.paperCash;
+        App.paperHoldings = obj.paperHoldings || App.paperHoldings;
+        App.paperOrders = obj.paperOrders || App.paperOrders;
+        App.journal = obj.journal || App.journal;
+        persist();
+        renderWatchlistTable(); renderPortfolio(); renderOrderbook(); renderJournal();
+        syncWatchlistsToCloudSoon();
+        toast('Import வெற்றி','ok');
+      }catch(err){
+        console.error('Dhass Trade Terminal - import parse error:', err);
+        toast('Import பிழை: '+err.message,'err');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = ''; // allow re-importing the same file again if needed
+  });
+  document.getElementById('btnClearCreds').addEventListener('click', ()=>{
+    lsDel('creds'); lsDel('session'); App.creds=null; App.session=null;
+    toast('Credentials அழிக்கப்பட்டது','ok');
+  });
+
+  async function refreshMyPublicIpDisplay(){
+    const el = document.getElementById('myPublicIpVal');
+    el.textContent = '...';
+    await fetchPublicIP();
+    el.textContent = App.liveIP || 'கண்டுபிடிக்க முடியல';
+  }
+  document.getElementById('btnRefreshPublicIp').addEventListener('click', refreshMyPublicIpDisplay);
+  document.getElementById('btnCopyPublicIp').addEventListener('click', ()=>{
+    const ip = document.getElementById('myPublicIpVal').textContent;
+    if(!ip || ip==='—' || ip==='...'){ toast('முதலில் IP-ஐ பார்க்கவும்','err'); return; }
+    if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(ip); } else { fallbackCopy(ip); }
+    toast('📋 IP காப்பி ஆனது', 'ok');
+  });
+  refreshMyPublicIpDisplay();
+
+  // resume session if exists
+  if(App.session && App.creds){
+    enterApp();
+  } else if(App.mode==='paper' && lsGet('mode',null)==='paper'){
+    // only auto-resume paper if explicitly chosen before AND some data exists
+    const anyStocks = App.watchlists.some(w=>w.stocks.length>0);
+    if(anyStocks || App.paperOrders.length){ enterApp(); }
+  }
+});
+</script>
+</body>
+</html>
